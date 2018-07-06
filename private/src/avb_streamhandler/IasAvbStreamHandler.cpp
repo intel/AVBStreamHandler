@@ -432,13 +432,15 @@ IasAvbProcessingResult IasAvbStreamHandler::init( const std::string& configName,
 
       if (eIasAvbProcOK == result)
       {
-#if 0 // TODO KSL: to be replace by sufficient implementation
+        // TODO: Add a config option to receive user input to disable avb_watchdog at runtime.
+        //       Otherwise, would not be able to start by executing the demo_app normally
+        //       since WATCHDOG_USEC is set by systemctl.
         if (mEnvironment->createWatchdog() != eIasAvbProcOK)
         {
           DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, " Init of watchdog failed");
           result = eIasAvbProcInitializationFailed;
         }
-#endif
+
       }
 
       if (eIasAvbProcOK == result)
