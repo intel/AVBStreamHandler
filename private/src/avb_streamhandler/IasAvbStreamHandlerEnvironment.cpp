@@ -13,6 +13,9 @@
 #include "avb_streamhandler/IasDiaLogger.hpp"
 #include "avb_streamhandler/IasAvbTSpec.hpp"
 #include "avb_streamhandler/IasLocalAudioBufferDesc.hpp"
+#include "avb_watchdog/IasSystemdWatchdogManager.hpp"
+#include "avb_watchdog/IasWatchdogTimerRegistration.hpp"
+#include "avb_watchdog/IasWatchdogThread.hpp"
 
 #include "lib_ptp_daemon/IasLibPtpDaemon.hpp"
 #include "avb_helper/ias_safe.h"
@@ -107,12 +110,10 @@ IasAvbStreamHandlerEnvironment::IasAvbStreamHandlerEnvironment(DltLogLevelType d
   , mTxRingSize(0)
   , mLastLinkState(0)
   , mArmed(true)
-  , mUseWatchdog(false)
+  , mUseWatchdog(true)  // Flag to disable/enable internal watchdog.
   , mWdTimeout(0u)
-// TO BE REPLACED  , mWdMainLoop(NULL)
-// TO BE REPLACED  , mWdThread(NULL)
-// TO BE REPLACED  , mWdManager(NULL)
-// TO BE REPLACED  , mWdMainLoopContext(NULL)
+  , mWdThread(NULL)
+  , mWdManager(NULL)
 #if defined(PERFORMANCE_MEASUREMENT)
   , mAudioFlowLogEnabled(-1)
   , mAudioFlowLoggingState(0)
@@ -1180,7 +1181,6 @@ IasAvbProcessingResult IasAvbStreamHandlerEnvironment::createWatchdog()
 {
   IasAvbProcessingResult ret = eIasAvbProcInitializationFailed;
 
-#if 0 // TODO KSL: to be replace by sufficient implementation
   if (NULL != mWdManager)
   {
     DLT_LOG_CXX(*mLog, DLT_LOG_WARN, LOG_PREFIX, "Already created watchdog");
@@ -1215,60 +1215,49 @@ IasAvbProcessingResult IasAvbStreamHandlerEnvironment::createWatchdog()
 
     if (mUseWatchdog)
     {
-      mWdMainLoop = new (std::nothrow) Ias::IasCommonApiMainLoop(*mLog);
-      if (NULL == mWdMainLoop)
-      {
-        DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Not enough memory to allocate IasCommonApiMainLoop!");
-        ret = eIasAvbProcNotEnoughMemory;
-      }
-      else
-      {
-        mWdMainLoopContext.reset(new (std::nothrow) CommonAPI::MainLoopContext());
-        if (NULL == mWdMainLoopContext)
+      //Create thread, assign wd to it and start it.
+      IasWatchdog::IasWatchdogThread *mWdThreadSetup = new IasWatchdog::IasWatchdogThread();
+      mWdThreadSetup->init();
+
+        //Create the watchdogTimer shared ptr object
+        std::shared_ptr<IasWatchdog::IasWatchdogTimerRegistration> watchdogTimerRegistration = std::make_shared<IasWatchdog::IasWatchdogTimerRegistration>(*mLog);
+
+        //Create the watchdog and connect to wdtimer - timer is meant for storing variables only
+        IasWatchdog::IasSystemdWatchdogManager* watchdogManager = new IasWatchdog::IasSystemdWatchdogManager(*mLog);
+        if ( nullptr != watchdogManager )
         {
-          DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Not enough memory to allocate MainLoopContext!");
+          IasWatchdog::IasWatchdogResult result = watchdogManager->init(watchdogTimerRegistration);
+          if (IAS_FAILED(result))
+          {
+            delete watchdogManager;
+            watchdogManager = nullptr;
+            DLT_LOG_CXX(*mLog,  DLT_LOG_ERROR, "IasWatchdog::createWatchdogManager - failed to initialise Watchdog Manager, result = ", result);
+          }
+
+          //Pass the watchdogManager pointer to wdThread
+          mWdManager = watchdogManager;
+          mWdThreadSetup->setWatchdogManager(mWdManager);
+        }
+
+        mWdThread = new (std::nothrow) IasThread(mWdThreadSetup,"watchdoggy");
+        if (NULL == mWdThread)
+        {
+          DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Error creating thread for watchdog!");
           ret = eIasAvbProcNotEnoughMemory;
         }
         else
         {
-          if (IasResult::cOk != mWdMainLoop->init(mWdMainLoopContext))
+          if (IAS_FAILED(mWdThread->start(true)))
           {
-            DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Watchdog MainLoop init failed!");
+            DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "failed to start watchdog thread");
             ret = eIasAvbProcInitializationFailed;
           }
           else
           {
-            mWdThread = new (std::nothrow) IasThread(mWdMainLoop);
-            if (NULL == mWdThread)
-            {
-              DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Not enough memory to allocate IasThread!");
-              ret = eIasAvbProcNotEnoughMemory;
-            }
-            else
-            {
-              mWdManager = IasWatchdog::createWatchdogManager(mWdMainLoopContext, *mLog);
-              if (NULL == mWdManager)
-              {
-                DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "failed to create watchdog manager");
-                ret = eIasAvbProcInitializationFailed;
-              }
-              else
-              {
-                if (IAS_FAILED(mWdThread->start(true)))
-                {
-                  DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "failed to start watchdog thread");
-                  ret = eIasAvbProcInitializationFailed;
-                }
-                else
-                {
-                  // success
-                  ret = eIasAvbProcOK;
-                }
-              }
-            }
+            // success
+            ret = eIasAvbProcOK;
           }
         }
-      }
     }
   }
 
@@ -1276,7 +1265,6 @@ IasAvbProcessingResult IasAvbStreamHandlerEnvironment::createWatchdog()
   {
     destroyWatchdog();
   }
-#endif
 
   return ret;
 }
@@ -1284,7 +1272,7 @@ IasAvbProcessingResult IasAvbStreamHandlerEnvironment::createWatchdog()
 
 void IasAvbStreamHandlerEnvironment::destroyWatchdog()
 {
-#if 0 // TODO KSL: to be replace by sufficient implementation  if (NULL != mWdThread)
+  if (NULL != mWdThread)
   {
     if (mWdThread->isRunning())
     {
@@ -1296,21 +1284,9 @@ void IasAvbStreamHandlerEnvironment::destroyWatchdog()
 
   if (NULL != mWdManager)
   {
-    IasWatchdog::destroyWatchdogManager(mWdManager);
+    //IasWatchdog::destroyWatchdogManager(mWdManager);
     mWdManager = NULL;
   }
-
-  if (NULL != mWdMainLoopContext)
-  {
-    mWdMainLoopContext.reset();
-  }
-
-  if (NULL != mWdMainLoop)
-  {
-    delete mWdMainLoop;
-    mWdMainLoop = NULL;
-  }
-#endif
 
   mWdTimeout = 0u;
   mUseWatchdog = false;
