@@ -1,0 +1,16 @@
+
+#------------------------------------------------------------------
+# Build the AVB Streamhandler Watchdog Library
+#------------------------------------------------------------------
+add_library( ias-media_transport-avb_watchdog STATIC
+    private/src/avb_watchdog/IasSystemdWatchdogManager.cpp
+    private/src/avb_watchdog/IasWatchdogInterface.cpp
+    private/src/avb_watchdog/IasWatchdogResult.cpp
+)
+
+# for version header
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+target_compile_options( ias-media_transport-avb_watchdog PUBLIC -fPIC)
+target_link_libraries( ias-media_transport-avb_watchdog systemd)
+

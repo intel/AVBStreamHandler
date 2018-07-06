@@ -21,6 +21,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries( avb_streamhandler_demo dlt )
 target_link_libraries( avb_streamhandler_demo ias-media_transport-avb_streamhandler )
+target_link_libraries( avb_streamhandler_demo ias-media_transport-avb_watchdog )
 
 # set capabilities if building for Linux host execution
 if (${IAS_IS_HOST_BUILD})

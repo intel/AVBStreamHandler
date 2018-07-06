@@ -16,6 +16,9 @@
 #include "media_transport/avb_streamhandler_api/IasAvbConfigRegistryInterface.hpp"
 #include "media_transport/avb_streamhandler_api/IasAvbClockDriverInterface.hpp"
 #include "media_transport/avb_streamhandler_api/IasAvbRegistryKeys.hpp"
+#include "avb_watchdog/IasSystemdWatchdogManager.hpp"
+#include "avb_helper/IasThread.hpp"
+
 #include "IasAvbTypes.hpp"
 #include <map>
 #include <dlt.h>
@@ -225,7 +228,7 @@ class IasAvbStreamHandlerEnvironment : private virtual IasAvbConfigRegistryInter
     /**
      * @brief returns the instance of the WatchdogManager
      */
-    // TO BE REPLACED static inline IasWatchdog::IasIWatchdogManagerInterface *getWatchdogManager();
+    static inline IasWatchdog::IasSystemdWatchdogManager *getWatchdogManager();
 
 #if defined(PERFORMANCE_MEASUREMENT)
     static inline bool isAudioFlowLogEnabled();
@@ -312,8 +315,8 @@ class IasAvbStreamHandlerEnvironment : private virtual IasAvbConfigRegistryInter
     bool mUseWatchdog;
     uint32_t mWdTimeout;
     // TO BE REPLACED Ias::IasCommonApiMainLoop* mWdMainLoop;
-    // TO BE REPLACED IasThread* mWdThread;
-    // TO BE REPLACED IasWatchdog::IasIWatchdogManagerInterface* mWdManager;
+    IasThread* mWdThread;
+    IasWatchdog::IasSystemdWatchdogManager* mWdManager;
     // TO BE REPLACED std::shared_ptr<CommonAPI::MainLoopContext> mWdMainLoopContext;
 
 #if defined(PERFORMANCE_MEASUREMENT)
@@ -479,10 +482,9 @@ inline uint32_t IasAvbStreamHandlerEnvironment::getWatchdogTimeout()
   return ret;
 }
 
-/* TO BE REPLACED
-inline IasWatchdog::IasIWatchdogManagerInterface* IasAvbStreamHandlerEnvironment::getWatchdogManager()
+inline IasWatchdog::IasSystemdWatchdogManager* IasAvbStreamHandlerEnvironment::getWatchdogManager()
 {
-  IasWatchdog::IasIWatchdogManagerInterface* ret = NULL;
+  IasWatchdog::IasSystemdWatchdogManager* ret = NULL;
 
   if (NULL != mInstance)
   {
@@ -491,7 +493,6 @@ inline IasWatchdog::IasIWatchdogManagerInterface* IasAvbStreamHandlerEnvironment
 
   return ret;
 }
-*/
 
 #if defined(PERFORMANCE_MEASUREMENT)
 inline bool IasAvbStreamHandlerEnvironment::isAudioFlowLogEnabled()
