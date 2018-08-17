@@ -48,6 +48,7 @@ if(${SANITIZERS_ON})
 endif()
 target_link_libraries( test_IasTestAvbStreamhandler dlt )
 target_link_libraries( test_IasTestAvbStreamhandler ias-media_transport-avb_streamhandler )
+target_link_libraries( test_IasTestAvbStreamhandler ias-media_transport-avb_watchdog )
 
 target_link_libraries( test_IasTestAvbStreamhandler boost_system )
 target_link_libraries( test_IasTestAvbStreamhandler boost_iostreams )
