@@ -1,0 +1,18 @@
+/*
+ * Copyright (C) 2018 Intel Corporation. All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+*/
+/**
+ * @file
+ */
+#ifndef ${VERSION_H_INCLUDE_GUARD}
+#define ${VERSION_H_INCLUDE_GUARD}
+
+#define VERSION_MAJOR ${CURRENT_VERSION_MAJOR}
+#define VERSION_MINOR ${CURRENT_VERSION_MINOR}
+#define VERSION_REVISON ${CURRENT_VERSION_REVISION}
+
+#define VERSION_STRING "${CURRENT_VERSION_MAJOR}.${CURRENT_VERSION_MINOR}.${CURRENT_VERSION_REVISION}"
+
+#endif

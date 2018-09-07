@@ -1,0 +1,26 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the AVB Streamhandler Library
+#------------------------------------------------------------------
+add_library( ias-media_transport-avb_helper STATIC
+    private/src/avb_helper/IasSignal.cpp
+    private/src/avb_helper/IasIRunnable.cpp
+    private/src/avb_helper/IasThread.cpp
+    private/src/avb_helper/IasResult.cpp
+    private/src/avb_helper/ias_safe.c
+)
+
+target_link_libraries( ias-media_transport-avb_helper ${DLT_LDFLAGS} )
+target_compile_options( ias-media_transport-avb_helper PUBLIC ${DLT_CFLAGS_OTHER})
+target_include_directories( ias-media_transport-avb_helper PUBLIC ${DLT_INCLUDE_DIRS})
+
+target_compile_options( ias-media_transport-avb_helper PUBLIC -fPIC )
+
+find_path( IGB_INCLUDE "igb.h"  PATHS "${CMAKE_CURRENT_SOURCE_DIR}/deps/igb_avb/lib")
+
+include_directories( ${IGB_INCLUDE} )

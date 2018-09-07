@@ -1,0 +1,16 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
+add_executable( avb_video_debug_app
+                private/src/avb_video_debug_app/main.cpp
+                )
+
+target_compile_options( avb_video_debug_app PUBLIC --std=c++11 )
+
+target_link_libraries( avb_video_debug_app ias-media_transport-avb_video_bridge -lpthread )
+target_link_libraries( avb_video_debug_app dlt )
+                

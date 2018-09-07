@@ -1,0 +1,30 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the Stream Handler demo executable
+#------------------------------------------------------------------
+
+add_executable( avb_streamhandler_demo
+                private/src/avb_streamhandler_demo/main.cpp
+                )
+
+# for version header
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+#find_package(PkgConfig)
+#pkg_check_modules(DLT REQUIRED automotive-dlt)
+#pkg_check_modules(DLT REQUIRED automotive-dlt-c++)
+
+target_link_libraries( avb_streamhandler_demo dlt )
+target_link_libraries( avb_streamhandler_demo ias-media_transport-avb_streamhandler )
+
+# set capabilities if building for Linux host execution
+if (${IAS_IS_HOST_BUILD})
+  add_custom_command(TARGET avb_streamhandler_demo POST_BUILD
+      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh $<TARGET_FILE:avb_streamhandler_demo>
+  )
+endif()

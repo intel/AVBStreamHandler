@@ -1,0 +1,3 @@
+DEVPATH=="*/i2c-0", MODE="0660", GROUP="ias_avb"
+
+

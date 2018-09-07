@@ -1,0 +1,27 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the AVB Video Bridge library
+#------------------------------------------------------------------
+
+add_library( ias-media_transport-avb_video_bridge STATIC
+    private/src/avb_video_bridge/IasAvbVideoBridge.cpp
+    private/src/avb_video_bridge/IasAvbVideoSender.cpp
+    private/src/avb_video_bridge/IasAvbVideoReceiver.cpp
+    private/src/avb_video_common/IasAvbVideoShmConnection.cpp
+    private/src/avb_video_common/IasAvbVideoRingBuffer.cpp
+    private/src/avb_video_common/IasAvbVideoRingBufferShm.cpp
+    private/src/avb_video_common/IasAvbVideoRingBufferFactory.cpp
+)
+
+target_link_libraries( ias-media_transport-avb_video_bridge ias-media_transport-avb_helper )
+target_link_libraries( ias-media_transport-avb_video_bridge ias-audio-common )
+target_link_libraries( ias-media_transport-avb_video_bridge dlt )
+
+if (${IAS_IS_HOST_BUILD})
+  target_compile_options(ias-media_transport-avb_video_bridge PUBLIC -DIAS_HOST_BUILD=1)
+endif()

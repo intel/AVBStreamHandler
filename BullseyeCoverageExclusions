@@ -1,0 +1,2 @@
+exclude folder ../../../audio/
+exclude folder ../../../media_transport/avb_streamhandler/private/tst/

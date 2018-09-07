@@ -1,0 +1,18 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the wrapper Library
+#------------------------------------------------------------------
+add_library( test_wrapper STATIC
+    private/src/test_wrapper/wrap_condvar.c
+    private/src/test_wrapper/wrap_mmap.c
+    private/src/test_wrapper/wrap_mutex.c
+    private/src/test_wrapper/wrap_thread.c
+)
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/private/inc )
+target_compile_options( test_wrapper PUBLIC -fPIC )
+target_link_libraries( test_wrapper pthread )

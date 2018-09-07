@@ -1,0 +1,26 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+add_library( ias-media_transport-test_common STATIC
+    private/src/test_common/IasSpringVilleInfo.cpp
+)
+
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/private/inc )
+
+find_library( PCI_LIB "pci" ) # PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../open-avb/lib/igb")
+
+target_link_libraries( ias-media_transport-test_common ${PCI_LIB} )
+
+# target_compile_options( ias-media_transport-lib_ptp_daemon PUBLIC -fPIC )
+
+
+
+# IasBuildLibrary(DSO_PUBLISH_ALL)
+
+#IasGlobalPropertyAppend(IAS_COVERAGE_OFF_DIRS
+#   ${CMAKE_CURRENT_SOURCE_DIR}/private/src/test_common
+#   ${CMAKE_CURRENT_SOURCE_DIR}/private/inc/test_common
+#)

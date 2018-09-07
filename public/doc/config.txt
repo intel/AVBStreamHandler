@@ -1,0 +1,14 @@
+# use ($THIS) to use current directory
+# multiple input paths allowed
+# relative to cmake root dir
+PATH_IN = media_transport/avb_streamhandler/private
+#PATH_IN = KC--3.0_H-media_transport--avb_streamhandler/git/private
+
+# trigger IO print outs
+DEBUG = 0
+
+# output files: (relative path to python script)
+FILE_ERROR = dlt_error.html
+FILE_WARNING = dlt_warning.html
+FILE_INFO = dlt_info.html
+FILE_VERBOSE = dlt_verbose.html

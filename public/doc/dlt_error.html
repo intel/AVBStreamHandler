@@ -1,0 +1,89 @@
+<table class="doxtable">
+<tr><th>Context ID <th>DLT Message <th>Description
+<tr><td>_AEN<td>IasAlsaEngine::createAlsaStream(345): Failed to init new stream!<td>Failed to init new stream
+<tr><td>_AUI<td>IasVideoStreamInterface::setupVideo(85): Initializing Video: No channel given!<td>Invalid param: Channel name provided is empty.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoStream(285): Could not be called while Video Interface is not running<td>Not initialized: Cannot create a VideoStream when the interface isn't running.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoInStream(312):  StreamId already in use. Id= &lt;STREAMID&gt; <td>Invalid param: The streamId parameter provided is already being used.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoInStream(344): Failed to init new video stream!<td>VideoInStream successfully created but initialization failed.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoInStream(353): Not enough memory to instantiate VideoStream!<td>Not enough memory: Unable to create a new instance of VideoInStream.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoInStream(363): Could not be called while Video Interface is not running<td>Not initialized: Cannot create a VideoInStream when the interface isn't running.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoOutStream(392): StreamId already in use. Id= &lt;STREAMID&gt; <td>Invalid param: The streamId parameter provided is already being used.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoOutStream(424): Failed to init new video stream!<td>VideoOutStream successfully created but initialization failed.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoOutStream(433): Not enough memory to instantiate VideoStream!<td>Not enough memory: Unable to create a new instance of VideoOutStream.
+<tr><td>_AUI<td>IasVideoStreamInterface::createVideoOutStream(443): Could not be called while Video Interface is not running<td>Not initialized: Cannot create a VideoOutStream when the interface isn't running.
+<tr><td>_AUI<td>IasVideoStreamInterface::destroyVideoStream(501): VideoIn stream still connected<td>Already in use: The Video in stream is still connected and cannot be destroyed.
+<tr><td>_AUI<td>IasVideoStreamInterface::destroyVideoStream(521): VideoOut stream still connected<td>Already in use: The Video out stream is still connected and cannot be destroyed.
+<tr><td>_AUI<td>IasVideoStreamInterface::destroyVideoStream(530): Element doesn't exist<td>Invalid param: The stream id provided does cannot be found in the in or out Video stream list.
+<tr><td><td>IasAlsaWorkerThread::init(79): Couldn't create worker thread!<td>Not enough memory: Unable to create a new Worker Thread.
+<tr><td><td>IasAlsaWorkerThread::init(109): Invalid parameter!<td>The Alsa stream and/or the clock domain parameters were null.
+<tr><td><td>IasAlsaWorkerThread::start(141): Couldn't start Alsa worker thread! Error = &lt;&gt; <td>Thread start failed: The alsa worker thread couldn't be started and returned a runtime error.
+<tr><td><td>IasAlsaWorkerThread::start(151): Worker thread can't be started since it's not available!<td>The Alsa worker thread was NULL.
+<tr><td><td>IasAlsaWorkerThread::stop(212): Worker thread can't be stopped since it's not available!<td>Alsa worker thread is NULL.
+<tr><td><td>IasAlsaWorkerThread::removeAlsaStream(677): Stream &lt;GETSTREAMID&gt; to remove not found!<td>Invalid param: The streamId associated with the ALSA stream parameter provided is not contained in the stream list. Cannot remove it.
+<tr><td><td>IasAlsaWorkerThread::removeAlsaStream(689): Invalid parameter! (alsaStream == NULL!)<td>Invalid param: AlsaStream == NULL
+<tr><td>_AJI<td>IasAvbJackInterface::start(241): Jack made a unique name &lt;JACK_GET_CLIENT_NAMEMPROCESSINGCLIENT&gt; <td>Jacklib has forced the use of a unique name
+<tr><td>_AJI<td>IasAvbJackInterface::start(251): Specified frame size does not match Jack frame size!<td>Inconsistent frame size between obtained jack buffer size and config file entry.
+<tr><td>_AJI<td>IasAvbJackInterface::start(263):  Specified sample rate does not match Jack sample rate!<td>Inconsistent sample rate between obtained jack frame rate and config file entry.
+<tr><td>_AJI<td>IasAvbJackInterface::start(287):  jack_set_process_callback failed. Retval= &lt;DLT_INT32RETURNVALUE&gt; <td>Couldn't set the callback function of Jack.
+<tr><td>_AJI<td>IasAvbJackInterface::start(313):  jack_activate failed: return value = &lt;DLT_INT32RETURNVALUE&gt; <td>Error: Could not activate Jack
+<tr><td>_AJI<td>IasAvbJackInterface::createJackStream(447):  Could not be called while Jack is activated<td>Already running: Cannot create a Jack Stream while Jack is running.
+<tr><td>_AJI<td>IasAvbJackInterface::createJackStream(459):  StreamId already in use. Id= &lt;DLT_UINT16STREAMID&gt; <td>Invalid param: Stream Id is being used by another stream.
+<tr><td>_AJI<td>IasAvbJackInterface::createJackStream(492):  Not enough memory to instantiate AudioStream!<td>Not enough memory: Unable to create a new instance of VideoInStream.
+<tr><td>_AJI<td>IasAvbJackInterface::destroyJackStream(514):  Could not be called while Jack is activated<td>Already in use: Jack server is still running, cannot call destoryJackStream.
+<tr><td>_AJI<td>IasAvbJackInterface::destroyJackStream(537):  stream still connected<td>Already in use: The Jack stream is still connected and cannot be destroyed.
+<tr><td>_AJI<td>IasAvbJackInterface::destroyJackStream(546):  Element doesn't exist<td>Invalid param: StreamId provided does not match a Jack Stream id.
+<tr><td>_AJI<td>IasAvbJackInterface::partitionJackStream(579): not found<td>Invalid param: StreamId provided does not match a Jack Stream id.
+<tr><td>_AJI<td>IasAvbJackInterface::registerJackPorts(630): port fails with name : &lt;C_STR&gt; <td>Error: Failed to register ports with Jack.
+<tr><td>_HCD<td>IasAvbHwCaptureClockDomain::init(131): Couldn't create HwCapture thread!!<td>Not enough memory to create the thread.
+<tr><td><td>IasJackStream::setPortNames(203): ) is higher or equal to the number of channels ( &lt;STARTINGCHANNEL&gt; ) &lt;MNUMCHANNELS&gt; <td>Invalid param: The provided parameter starting channel is greater than or equal to the number of channels.
+<tr><td><td>IasAvbTransmitSequencer::init(152): Couldn't create transmit thread!<td>Not enough memory to create the thread.
+<tr><td><td>IasAvbStream::initCommon(115): Not enough memory to allocate IasAvbTSpec!<td>Not enough memory: Unable to create a new instance of Tspec.
+<tr><td><td>IasAvbStream::initCommon(131): Not enough memory to allocate IasAvbStreamId!<td>Not enough memory: Unable to create a new instance of StreamId.
+<tr><td>_AAS<td>IasAvbAudioStream::initTransmit(276): Not enough memory to allocate AudioData[mSamplesPerChannelPerPacket]! mSamplesPerChannelPerPacket= &lt;MSAMPLESPERCHANNELPERPACKET&gt; <td>Not enough memory to allocate AudioData[mSamplesPerChannelPerPacket]
+<tr><td>_AAS<td>IasAvbAudioStream::initTransmit(314): Not enough memory to allocate fill level FIFO<td>Not enough memory to allocate Int32[fillLevel]
+<tr><td>_AAS<td>IasAvbAudioStream::prepareAllPackets(465): Failed to get a reference packet from the pool!<td>Init failed: Requested variable referencePacket == NULL
+<tr><td>_AAS<td>IasAvbAudioStream::prepareAllPackets(473): No source MAC address!<td>Init failed: Requested variable sourceMac == NULL
+<tr><td>_LVB<td>IasLocalVideoBuffer::writeH264(230): WRITE ERROR ------- headroom =  &lt;HEADROOM&gt; <td>The buffer size exceeds the available packet size. Cannot write to packet.
+<tr><td>_LVB<td>IasLocalVideoBuffer::writeMpegTS(420): WRITE ERROR ------- headroom =  &lt;HEADROOM&gt; <td>The buffer size exceeds the available packet size. Cannot write to packet.
+<tr><td><td>IasAlsaStream::init(84): Could not create IPC!<td>Not enough memory: Not enough memory available to create AudioShmProvider.
+<tr><td><td>IasAlsaStream::init(96): IPC init failed! ret= &lt;INT32RET&gt; <td>Init failed: The initialization for AudioShmProvider failed.
+<tr><td><td>IasAlsaStream::init(111): ALSA stream init failed, reason= &lt;INT32RET&gt; <td>ALSA stream init failed
+<tr><td>_RXE<td>IasAvbReceiveEngine::init(128): Couldn't create receive thread!<td>Init failed: Not enough memory to create thread.
+<tr><td>_RXE<td>IasAvbReceiveEngine::init(141): Couldn't create receive buffer!<td>Init failed: Not enough memory to create the buffer.
+<tr><td>_RXE<td>IasAvbReceiveEngine::start(242): mReceiveThread == NULL<td>Null pointer access: The returned mReceiveThread == NULL
+<tr><td>_RXE<td>IasAvbReceiveEngine::createReceiveVideoStream(417): Not enough memory to instantiate VideoStream!<td>Not enough memory: Could not create a new instance of Video Stream.
+<tr><td>_RXE<td>IasAvbReceiveEngine::connectAudioStreams(536): Wrong type! AvbStreamId does not correspond to an AvbAudioStream<td>The StreamId parameter provided does not have a AudioStream type.
+<tr><td>_RXE<td>IasAvbReceiveEngine::connectAudioStreams(544): Could not connect since AVB stream could not be found!<td>The StreamId parameter provided can not be found in the AvbStream list.
+<tr><td>_RXE<td>IasAvbReceiveEngine::connectVideoStreams(572): Wrong type! AvbStreamId does not correspond to an AvbVideoStream<td>The StreamId parameter provided does not have a VideoStream type.
+<tr><td>_RXE<td>IasAvbReceiveEngine::connectVideoStreams(580): Could not connect since AVB stream could not be found!<td>The StreamId parameter provided can not be found in the AvbStream list.
+<tr><td>_RXE<td>IasAvbReceiveEngine::openReceiveSocket(681): mIgbDevice == NULL!<td>Init failed: Raw receive socket could not be opened.
+<tr><td>_RXE<td>IasAvbReceiveEngine::openReceiveSocket(698): <td>Init failed: Interface index not recognised.
+<tr><td>_RXE<td>IasAvbReceiveEngine::openReceiveSocket(720):  ( &lt;INT32ERRNO&gt; ) &lt;ERRNO&gt; <td>Init failed: IOCTL could not read out the flags from the NIC.
+<tr><td>_RXE<td>IasAvbReceiveEngine::openReceiveSocket(757):  ( &lt;INT32ERRNO&gt; ) &lt;ERRNO&gt; <td>Init failed: The receive buffer size could not be set.
+<tr><td>_RXE<td>IasAvbReceiveEngine::openReceiveSocket(792): ( &lt;INT32IFINDEX&gt; : &lt;IFR_NAME&gt; ) &lt;ERRNO&gt; <td>Init failed: Unable to bind socket to the interface.
+<tr><td>_TXE<td>IasAvbTransmitEngine::init(86): mIgbDevice == NULL!<td>Init failed: Returned igbDevice == NULL
+<tr><td>_TXE<td>IasAvbTransmitEngine::createTransmitAudioStream(513): streamId already exists!<td>Invalid param: The streamId parameter provided is already assigned to another stream.
+<tr><td>_TXE<td>IasAvbTransmitEngine::createTransmitAudioStream(545): Not enough memory to instantiate AudioStream!\n<td>Not enough memory: Couldn't create a new IasAvbAudioStream.
+<tr><td>_TXE<td>IasAvbTransmitEngine::createTransmitVideoStream(572): streamId already exists!<td>Invalid param: The streamId parameter is already being used by another stream.
+<tr><td>_TXE<td>IasAvbTransmitEngine::createTransmitVideoStream(607): Not enough memory to instantiate video stream!\n<td>Not enough memory: Could not create a new instance of the Transmit Video stream
+<tr><td>_TXE<td>IasAvbTransmitEngine::connectAudioStreams(861): Wrong type! AvbStreamId does not correspond to an AvbAudioStream<td>Invalid param: Local stream Id parameter cannot be found in the audio stream list.
+<tr><td>_TXE<td>IasAvbTransmitEngine::connectAudioStreams(872): Invalid streamId &lt;SID&gt; <td>The StreamId parameter provided can not be found in the AvbStream list.
+<tr><td>_TXE<td>IasAvbTransmitEngine::connectVideoStreams(900): Wrong type! AvbStreamId does not correspond to an AvbVideoStream<td>The StreamId parameter provided does not have a VideoStream type.
+<tr><td>_TXE<td>IasAvbTransmitEngine::connectVideoStreams(911): Invalid streamId &lt;SID&gt; <td>The StreamId parameter provided can not be found in the AvbStream list.
+<tr><td>_ASH<td>IasAvbStreamHandler::createTransmitAudioStream(819):  Clock Domain not found!!<td>Invalid param: The clockId parameter is not present in the Clock Domain map.
+<tr><td>_ASH<td>IasAvbStreamHandler::createTransmitAudioStream(842):  Assign mode other than 'eIasAvbIdAssignModeStatic' not implemented!<td>Not implemented: Attempt to use an assign mode that is currently unimplemented.
+<tr><td>_ASH<td>IasAvbStreamHandler::createJackStream(940):  Not enough memory to instantiate JackInterface!<td>Not enough memory: Couldn't create a new JackInterface.
+<tr><td>_ASH<td>IasAvbStreamHandler::createJackStream(959):  error initializing JackInterface: &lt;UINT32RESULT&gt; <td>Init failed: Could not set the config parameters JackClock and JackClientName.
+<tr><td>_ASH<td>IasAvbStreamHandler::createAlsaStream(1040):  Failed to init Alsa Engine!<td>Init failed: Could not initialize Alsa Engine, already initialized.
+<tr><td>_ASH<td>IasAvbStreamHandler::createAlsaStream(1048):  Not enough memory to instantiate Alsa Engine!<td>Not enough memory: Couldn't create a new AlsaEngine.
+<tr><td>_ASH<td>IasAvbStreamHandler::createAlsaStream(1087):  Clock Domain not found!!<td>Invalid param: The clockId parameter is not present in the Clock Domain map.
+<tr><td>_ASH<td>IasAvbStreamHandler::createTestToneStream(1155):  Not enough memory to create test tone stream!<td>Not enough memory: Couldn't create a new TestToneStream.
+<tr><td>_ASH<td>IasAvbStreamHandler::createTestToneStream(1166):  Failed to init the test tone stream!<td>Could not init a LocalAudioStream with the provided params.
+<tr><td>_ASH<td>IasAvbStreamHandler::connectStreams(1367):  Invalid local stream ID! ID= &lt;LOCALSTREAMID&gt; <td>Invalid param: Local stream Id parameter cannot be found in the audio or video stream lists.
+<tr><td>_ASH<td>IasAvbStreamHandler::createTransmitVideoStream(1738):  Clock Domain not found!!<td>Invalid param: The clockId parameter is not present in the Clock Domain map.
+<tr><td>_ASH<td>IasAvbStreamHandler::createTransmitVideoStream(1761):  Assign mode other than 'eIasAvbIdAssignModeStatic' not implemented!<td>Not implemented: The assignMode parameter type has not yet been implemented.
+<tr><td>_ASH<td>IasAvbStreamHandler::createReceiveVideoStream(1821): Not enough memory to instantiate ReceiveEngine!<td>Not enough memory: Could not create a new instance of ReceiveEngine.
+<tr><td>_ASH<td>IasAvbStreamHandler::createLocalVideoStream(1903):  Not enough memory to instantiate Video video interface factory!<td>Not enough memory: Unable to create a new instance of Video interface factory.
+<tr><td>_ASH<td>IasAvbStreamHandler::createTransmitEngine(2119):  Not enough memory to instantiate TransmitEngine!<td>Not enough memory: Could not create new TransmitEngine
+<tr><td>_ASH<td>IasAvbStreamHandler::createReceiveEngine(2164): Not enough memory to instantiate ReceiveEngine!<td>Not enough memory: Could not create new ReceiveEngine.
+</table>

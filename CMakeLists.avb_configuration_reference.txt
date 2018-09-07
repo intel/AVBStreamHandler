@@ -1,0 +1,22 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the default configuration plugin for the streamhandler
+#------------------------------------------------------------------
+
+add_library( ias-media_transport-avb_configuration_reference MODULE
+    private/src/avb_configuration_reference/IasAvbConfigReference.cpp
+)
+
+target_link_libraries( ias-media_transport-avb_configuration_reference ias-media_transport-avb_config_base )
+
+set_target_properties(ias-media_transport-avb_configuration_reference PROPERTIES PREFIX "")
+set_target_properties(ias-media_transport-avb_configuration_reference PROPERTIES OUTPUT_NAME "pluginias-media_transport-avb_configuration_reference")
+
+if (${IAS_IS_HOST_BUILD})
+  target_compile_options(ias-media_transport-avb_config_base PUBLIC -DIAS_HOST_BUILD=1)
+endif()

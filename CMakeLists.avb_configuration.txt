@@ -1,0 +1,27 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the Configuration Base library
+#------------------------------------------------------------------
+
+add_library( ias-media_transport-avb_config_base STATIC
+    private/src/avb_configuration/IasAvbConfigurationBase.cpp
+)
+
+target_link_libraries( ias-media_transport-avb_config_base ${DLT_LDFLAGS} )
+target_compile_options( ias-media_transport-avb_config_base PUBLIC ${DLT_CFLAGS_OTHER})
+target_include_directories( ias-media_transport-avb_config_base PUBLIC ${DLT_INCLUDE_DIRS})
+
+target_compile_options( ias-media_transport-avb_config_base PUBLIC -fPIC )
+
+if (${IAS_PREPRODUCTION_SW})
+  target_compile_options( ias-media_transport-avb_config_base PUBLIC -DIAS_PREPRODUCTION_SW=1 )
+endif()
+
+if (${IAS_IS_HOST_BUILD})
+  target_compile_options(ias-media_transport-avb_config_base PUBLIC -DIAS_HOST_BUILD=1)
+endif()

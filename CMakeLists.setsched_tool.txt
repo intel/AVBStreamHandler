@@ -1,0 +1,10 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
+add_executable( setsched_tool
+                private/src/setsched_tool/IasSetSchedTool.c
+                )

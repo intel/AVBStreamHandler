@@ -1,0 +1,12 @@
+[submodule "AVnu/igb_avb"]
+	path = deps/igb_avb
+	url = https://github.com/AVnu/igb_avb.git
+	branch = master
+[submodule "AVnu/gptp"]
+	path = deps/gptp
+	url = https://github.com/AVnu/gptp.git
+	branch = master
+[submodule "intel/AVB-AudioModules"]
+	path = deps/audio/common
+	url = https://github.com/intel/AVB-AudioModules.git
+	branch = master

@@ -1,0 +1,34 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the PTP library
+#------------------------------------------------------------------
+add_library( ias-media_transport-lib_ptp_daemon STATIC
+    private/src/lib_ptp_daemon/IasLibPtpDaemon.cpp
+)
+
+target_link_libraries( ias-media_transport-lib_ptp_daemon ${DLT_LDFLAGS} )
+target_compile_options( ias-media_transport-lib_ptp_daemon PUBLIC ${DLT_CFLAGS_OTHER})
+target_include_directories( ias-media_transport-lib_ptp_daemon PUBLIC ${DLT_INCLUDE_DIRS})
+
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/private/inc )
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/public/inc )
+
+find_path( PTP_INCLUDE_COMMON "ipcdef.hpp" PATHS "${CMAKE_CURRENT_SOURCE_DIR}/deps/gptp/common")
+find_path( PTP_INCLUDE_COMMON "ptptypes.hpp" PATHS "${CMAKE_CURRENT_SOURCE_DIR}/deps/gptp/common")
+find_path( PTP_INCLUDE_LINUX "linux_ipc.hpp" PATHS "${CMAKE_CURRENT_SOURCE_DIR}/deps/gptp/linux/src")
+find_path( IGB_INCLUDE "igb.h"  PATHS "${CMAKE_CURRENT_SOURCE_DIR}/deps/igb_avb/lib")
+
+include_directories( ${PTP_INCLUDE_LINUX} )
+include_directories( ${PTP_INCLUDE_COMMON} )
+include_directories( ${IGB_INCLUDE} )
+
+find_library( IGB_LIB "libigb.a" PATHS "${CMAKE_CURRENT_SOURCE_DIR}/deps/igb_avb/lib")
+
+target_link_libraries( ias-media_transport-lib_ptp_daemon ${IGB_LIB} )
+
+target_compile_options( ias-media_transport-lib_ptp_daemon PUBLIC -fPIC )

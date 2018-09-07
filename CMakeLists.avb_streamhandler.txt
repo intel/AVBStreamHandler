@@ -1,0 +1,91 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the AVB Streamhandler Library
+#------------------------------------------------------------------
+add_library( ias-media_transport-avb_streamhandler SHARED
+    private/src/avb_streamhandler/IasAvbStreamHandlerTypes.cpp
+    private/src/avb_streamhandler/IasAvbAudioStream.cpp
+    private/src/avb_streamhandler/IasAvbClockController.cpp
+    private/src/avb_streamhandler/IasAvbClockDomain.cpp
+    private/src/avb_streamhandler/IasAvbClockReferenceStream.cpp
+    private/src/avb_streamhandler/IasAvbHwCaptureClockDomain.cpp
+    private/src/avb_streamhandler/IasAlsaClockDomain.cpp
+    private/src/avb_streamhandler/IasAvbPacket.cpp
+    private/src/avb_streamhandler/IasAvbPacketPool.cpp
+    private/src/avb_streamhandler/IasAvbPtpClockDomain.cpp
+    private/src/avb_streamhandler/IasAvbRawClockDomain.cpp
+    private/src/avb_streamhandler/IasAvbReceiveEngine.cpp
+    private/src/avb_streamhandler/IasAvbRxStreamClockDomain.cpp
+    private/src/avb_streamhandler/IasAvbStream.cpp
+    private/src/avb_streamhandler/IasAvbStreamId.cpp
+    private/src/avb_streamhandler/IasAvbStreamHandler.cpp
+    private/src/avb_streamhandler/IasAvbStreamHandlerEnvironment.cpp
+    private/src/avb_streamhandler/IasAvbSwClockDomain.cpp
+    private/src/avb_streamhandler/IasAvbTransmitEngine.cpp
+    private/src/avb_streamhandler/IasAvbTransmitSequencer.cpp
+    private/src/avb_streamhandler/IasAvbTSpec.cpp
+    private/src/avb_streamhandler/IasAvbVideoStream.cpp
+    private/src/avb_streamhandler/IasTestToneStream.cpp
+    private/src/avb_streamhandler/IasLocalAudioBuffer.cpp
+    private/src/avb_streamhandler/IasLocalAudioStream.cpp
+    private/src/avb_streamhandler/IasLocalVideoStream.cpp
+    private/src/avb_streamhandler/IasLocalVideoBuffer.cpp
+    private/src/avb_streamhandler/IasAlsaVirtualDeviceStream.cpp
+    private/src/avb_streamhandler/IasAlsaHwDeviceHandler.cpp
+    private/src/avb_streamhandler/IasAlsaEngine.cpp
+    private/src/avb_streamhandler/IasAlsaWorkerThread.cpp
+    private/src/avb_streamhandler/IasAlsaHandlerWorkerThread.cpp
+    private/src/avb_streamhandler/IasAvbAudioShmProvider.cpp
+    private/src/avb_streamhandler/IasDiaLogger.cpp
+    private/src/avb_streamhandler/IasAvbDiagnosticPacket.cpp
+    private/src/avb_streamhandler/IasLocalAudioBufferDesc.cpp
+    private/src/avb_video_common/IasAvbVideoShmConnection.cpp
+    private/src/avb_video_common/IasAvbVideoRingBuffer.cpp
+    private/src/avb_video_common/IasAvbVideoRingBufferFactory.cpp
+    private/src/avb_video_common/IasAvbVideoRingBufferShm.cpp
+    private/src/avb_video_common/IasAvbVideoStreaming.cpp
+    private/src/avb_streamhandler/IasVideoStreamInterface.cpp
+    private/src/avb_streamhandler/IasLocalVideoInStream.cpp
+    private/src/avb_streamhandler/IasLocalVideoOutStream.cpp
+)
+
+if(${SANITIZERS_ON})
+  target_compile_options( ias-media_transport-avb_streamhandler PUBLIC -fsanitize=address,undefined )
+  target_link_libraries( ias-media_transport-avb_streamhandler asan )
+  target_link_libraries( ias-media_transport-avb_streamhandler ubsan )
+endif()
+
+if (${DIRECT_RX_DMA})
+    target_compile_options( ias-media_transport-avb_streamhandler PUBLIC -DDIRECT_RX_DMA=1 )
+endif()
+
+if (${IAS_PREPRODUCTION_SW})
+    target_compile_options( ias-media_transport-avb_streamhandler PUBLIC -DIAS_PREPRODUCTION_SW=1 )
+endif()
+
+if (${PERFORMANCE_MEASUREMENT})
+    target_compile_options( ias-media_transport-avb_streamhandler PUBLIC -DPERFORMANCE_MEASUREMENT=1 )
+endif()
+
+target_link_libraries( ias-media_transport-avb_streamhandler ${DLT_LDFLAGS} )
+target_compile_options( ias-media_transport-avb_streamhandler PUBLIC ${DLT_CFLAGS_OTHER})
+target_include_directories( ias-media_transport-avb_streamhandler PUBLIC ${DLT_INCLUDE_DIRS})
+
+target_compile_options( ias-media_transport-avb_streamhandler PUBLIC -msse )
+target_compile_options( ias-media_transport-avb_streamhandler PUBLIC -msse2 )
+target_compile_options( ias-media_transport-avb_streamhandler PUBLIC -O3 )
+
+include_directories(${AUDIO_COMMON_INCLUDE_DIRS})
+
+#find_library( AUDIO_COMMON_LIB "libias-audio-common.so" PATHS "${PKG_CONFIG_SYSROOT_DIR}/opt/audio/lib" )
+
+set_target_properties( ias-media_transport-avb_streamhandler PROPERTIES VERSION ${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_STRING} SOVERSION ${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_STRING} )
+
+target_link_libraries( ias-media_transport-avb_streamhandler ias-audio-common )
+target_link_libraries( ias-media_transport-avb_streamhandler ias-media_transport-lib_ptp_daemon )
+target_link_libraries( ias-media_transport-avb_streamhandler ias-media_transport-avb_helper )

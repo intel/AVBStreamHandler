@@ -1,0 +1,19 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Tests
+#------------------------------------------------------------------
+include( private/tst/avb_streamhandler/CMakeLists.txt )
+include( private/tst/avb_helper/CMakeLists.txt )
+
+#------------------------------------------------------------------
+# set capabilities for executables under test
+#------------------------------------------------------------------
+add_custom_command(TARGET avb_streamhandler_demo POST_BUILD
+    COMMAND setcap_tool $<TARGET_FILE:avb_streamhandler_demo>
+)
+

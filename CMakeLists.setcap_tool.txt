@@ -1,0 +1,11 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+add_executable( setcap_tool
+                private/src/setcap_tool/IasSetcapTool.c
+                )
+
+target_link_libraries( setcap_tool cap )
