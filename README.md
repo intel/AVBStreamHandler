@@ -23,6 +23,16 @@ Ensure that the following libraries are already installed
 
 ### Build and Install
 
+Note that for development we recommend installing AVB Stream Handler
+dependencies on a separate directory - indicated by `AVB_DEPS` environment
+variable throughout the instructions. This should keep the development
+environment "clean". However, this will prevent capabilities from working,
+as Linux ignores them when `LD_LIBRARY_PATH` environment variable is used
+to modify where libraries should be searched on, causing the need to run
+AVB Stream Handler with root privileges - see below.
+On production environment, all dependencies can be installed on default
+system directories, such as `/usr/lib` or `/usr/bin`.
+
 ```
 $ export AVB_DEPS=~/opt/libs
 $ mkdir -p $AVB_DEPS
@@ -88,7 +98,6 @@ $ sudo usermod -a -G ias_avb <username>
 $ sudo usermod -a -G ias_audio <username>
 - Restart the session.
 
-$ export LD_LIBRARY_PATH=$AVB_DEPS
 $ cp deps/audio/common/public/res/50-smartx.conf $AVB_DEPS/share/alsa/alsa.conf.d
      /51-smartx.conf
 $ cp build/deps/audio/common/libasound_module_* $AVB_DEPS/lib/alsa-lib/
@@ -118,11 +127,18 @@ $ sudo chgrp ias_avb /dev/igb_avb
 $ sudo chmod 660 /dev/ptp*
 $ sudo chgrp ias_avb /dev/ptp*
 
-
 # Start the DLT daemon (for logging and tracing) #
 
 $ cd $AVB_DEPS/bin
 $ ./dlt-daemon -d (to daemonize)
+
+# Following is necessary on development environment. If AVB Stream Handler
+# dependencies were installed on system default directories, it is not
+# necessary. Note that when using `AVB_DEPS` directory on
+# `LD_LIBRARY_PATH`, capabilities won't work, so `daemon_cl` and
+# `avb_streamhandler_demo` will need to be run with root powers.
+
+$ export LD_LIBRARY_PATH=$AVB_DEPS
 ```
 
 * Master/slave specific bits
@@ -131,21 +147,28 @@ $ ./dlt-daemon -d (to daemonize)
 
 - On Master
 $ sudo setcap cap_net_admin,cap_net_raw,cap_sys_nice+ep deps/gptp/linux/build/obj/daemon_cl
+
+# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
 $ deps/gptp/linux/build/obj/daemon_cl <I210 interface name> -G ias_avb -R 200 -GM &> /tmp/daemon_cl.log &
 
 - On Slave
 $ sudo setcap cap_net_admin,cap_net_raw,cap_sys_nice+ep deps/gptp/linux/build/obj/daemon_cl
-$ deps/gptp/linux/build/obj/daemon_cl <I210 interface name> -G ias_avb -R 200 -S &> /tmp/daemon_cl.log &
 
+# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
+$ deps/gptp/linux/build/obj/daemon_cl <I210 interface name> -G ias_avb -R 200 -S &> /tmp/daemon_cl.log &
 
 # Run the AVBSH demo #
 
 - On Master
+
+# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
 $ build/avb_streamhandler_demo -c -s
   pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
   -p MRB_Master_Audio -n <I210 interface name> &> /tmp/avbsh.log &
 
 - On Slave
+
+# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
 $ build/avb_streamhandler_demo -c -s
   pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
   -p MRB_Slave_Audio -n <I210 interface name> &> /tmp/avbsh.log &
