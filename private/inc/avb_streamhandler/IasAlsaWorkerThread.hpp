@@ -21,6 +21,7 @@
 #include "avb_helper/IasIRunnable.hpp"
 #include "avb_helper/IasThread.hpp"
 #include "avb_streamhandler/IasAvbClockDomain.hpp"
+#include "avb_watchdog/IasWatchdogInterface.hpp"
 #include <mutex>
 
 namespace IasMediaTransportAvb {
@@ -187,6 +188,7 @@ class /*IAS_DSO_PUBLIC*/ IasAlsaWorkerThread: public IasMediaTransportAvb::IasIR
     bool                mKeepRunning;     // if set to false the thread stops
     IasThread          *mThread;          // the thread object
     IasAvbClockDomain  *mClockDomain;     // type of clock domain that is used by this worker thread
+    IasWatchdog::IasWatchdogInterface *mWatchdog;
     uint32_t            mAlsaPeriodSize;  // period size
     uint32_t            mSampleFrequency; // sample frequency
     uint32_t            mServiceCycle;    // counter for current service cycle

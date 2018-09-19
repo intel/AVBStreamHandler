@@ -40,6 +40,7 @@ IasAlsaWorkerThread::IasAlsaWorkerThread(DltContext& dltContext)
   , mKeepRunning(false)
   , mThread(NULL)
   , mClockDomain(NULL)
+  , mWatchdog(NULL)
   , mAlsaPeriodSize(0u)
   , mSampleFrequency(0u)
   , mServiceCycle(0u)
@@ -97,6 +98,38 @@ IasAvbProcessingResult IasAlsaWorkerThread::init(IasAlsaStreamInterface *alsaStr
           DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, "Clock domain (",
                       uint16_t(mClockDomain->getType()), ") and Stream (",
                       alsaStream->getStreamId(), ") added");
+
+          uint64_t val = 0u;
+          (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cUseWatchdog, val);
+          if (val && IasAvbStreamHandlerEnvironment::isWatchdogEnabled())
+          {
+            IasWatchdog::IasSystemdWatchdogManager* wdManager = NULL;
+            wdManager = IasAvbStreamHandlerEnvironment::getWatchdogManager();
+
+            if (wdManager)
+            {
+              uint32_t timeout = IasAvbStreamHandlerEnvironment::getWatchdogTimeout();
+              std::string wdName = std::string("AvbAlsaWd");
+
+              mWatchdog = wdManager->createWatchdog(timeout, wdName);
+              if (mWatchdog)
+              {
+                DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, " supervised watchdog name:",
+                            wdName.c_str(), "timeout:", timeout, "ms");
+                result = eIasAvbProcOK;
+              }
+	      else
+              {
+                DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Could not create ",wdName.c_str(), "watchdog");
+		result = eIasAvbProcInitializationFailed;
+              }
+            }
+            else
+            {
+              DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "AvbStreamHandlerEnvironment could not getWatchdogManager");
+	      result = eIasAvbProcInitializationFailed;
+            }
+          }
         }
         else
         {
@@ -236,6 +269,19 @@ void IasAlsaWorkerThread::cleanup()
     delete mThread;
     mThread = NULL;
   }
+
+  if (mWatchdog)
+  {
+    IasWatchdog::IasSystemdWatchdogManager* wdManager = NULL;
+    wdManager = IasAvbStreamHandlerEnvironment::getWatchdogManager();
+
+    if (wdManager)
+    {
+      (void) wdManager->destroyWatchdog(mWatchdog);
+      mWatchdog = NULL;
+    }
+  }
+
   mKeepRunning = false;
   mClockDomain = NULL;
   mAlsaPeriodSize = 0u;
@@ -351,6 +397,7 @@ IasResult IasAlsaWorkerThread::run()
   bool isRefClkAvail     = false;
   uint64_t lastOversleep = 0u;
   uint32_t lastEpoch = (nullptr != ptp) ? ptp->getEpochCounter() : 0u;
+
   while (mKeepRunning)
   {
     rc = clock_gettime(IasLibPtpDaemon::cSysClockId, &tp);
@@ -447,6 +494,28 @@ IasResult IasAlsaWorkerThread::run()
     else
     {
       double timeOffset = 0.0;
+
+      /* A single watchdog timer reset is sufficient.
+         It should get kicked within our Wd interval */
+      if (mWatchdog)
+      {
+        if (mWatchdog->isRegistered())
+        {
+          (void) mWatchdog->reset();
+        }
+        else
+        {
+          if (IasResult::cOk != mWatchdog->registerWatchdog())
+          {
+            DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, " watchdog registration failure...");
+            mKeepRunning = false;
+          }
+          else
+          {
+            (void) mWatchdog->reset();
+          }
+        }
+      }
       // NOTE: ptp might be NULL in unit test context
       if (NULL != ptp)
       {
@@ -613,6 +682,9 @@ IasResult IasAlsaWorkerThread::run()
       mKeepRunning = false;
     }
   }
+
+  if (mWatchdog && mWatchdog->isRegistered())
+    (void) mWatchdog->unregisterWatchdog();
 
   DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, mThisInstance,
                     "Worker thread ", mThread->getName(), "has stopped");
