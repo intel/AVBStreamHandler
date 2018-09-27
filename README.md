@@ -183,3 +183,37 @@ $ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib aplay -D avb:stereo_0 <wav file>
 $ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib aplay -C -f dat -D avb:stereo_0 record.wav
   (quit with ^C once the master is done playing)
 ```
+
+### Testing video stream
+
+Load igb_avb driver and run gPTP deamon following instructions above. Then,
+run AVBSH demo:
+
+- On Master
+$ build/avb_streamhandler_demo -c -s
+  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
+  -p <video-profile-master> -n <I210 interface name> &> /tmp/avbsh.log &
+
+- On Slave
+$ build/avb_streamhandler_demo -c -s
+  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
+  -p <video-profile-slave> -n <I210 interface name> &> /tmp/avbsh.log &
+
+Note that <video-profile-master> can be `Video_POC_Master` for H.264 or
+`Video_POC_MpegTs_Master` for MPEG-TS, and `Video_POC_Slave` for H.264 or
+`Video_POC_MpegTs_Slave` for MPEG-TS on slave.
+
+Then, run the `avb_video_debug_app`:
+
+- On Master (for H.264)
+$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -h -s
+or (for MPEG-TS)
+$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -s
+
+- On Slave (for H.264)
+$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -h -r
+or (for MPEG-TS)
+$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -r
+
+Output should contain messages about sending (or receiving) packets with
+success.
