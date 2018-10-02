@@ -10,6 +10,7 @@ if (${GST_VIDEO_FOUND})
 
     add_library( ias-media_transport-gst_avb_video_plugin SHARED
         private/src/gst/gstavbplugin.cpp
+        private/src/gst/gstavbclock.cpp
         private/src/gst/gstavbvideosink.cpp
     )
 
