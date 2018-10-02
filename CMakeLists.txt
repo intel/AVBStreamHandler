@@ -84,6 +84,7 @@ include( CMakeLists.avb_clockdriver.txt )
 include( CMakeLists.avb_streamhandler_demo.txt )
 include( CMakeLists.avb_video_bridge.txt )
 include( CMakeLists.avb_video_debug_app.txt )
+include( CMakeLists.gst_avb_video_plugin.txt )
 
 #------------------------------------------------------------------
 #Include makefile building internal tools (only on host / not needed on target)
