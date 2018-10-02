@@ -19,6 +19,7 @@ endif()
 target_link_libraries( test_IasTestAvbHelper dlt )
 target_link_libraries( test_IasTestAvbHelper ias-media_transport-avb_streamhandler )
 
+target_link_libraries( test_IasTestAvbHelper ias-media_transport-avb_watchdog )
 ### IasAddPrivateCXXFlags( "-fno-access-control" )
 
   # uncomment next line to enable verbose logging

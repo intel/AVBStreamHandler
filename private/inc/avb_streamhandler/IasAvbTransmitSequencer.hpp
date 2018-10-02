@@ -23,7 +23,7 @@
 #include "IasAvbStreamHandlerEnvironment.hpp"
 #include "avb_helper/IasThread.hpp"
 #include "avb_helper/IasIRunnable.hpp"
-// TO BE REPLACED #include "monitoring_and_lifecycle/watchdog/IasIWatchdogInterface.hpp"
+#include "avb_watchdog/IasWatchdogInterface.hpp"
 #include <mutex>
 #include <set>
 
@@ -310,27 +310,28 @@ class IasAvbTransmitSequencer : private IasMediaTransportAvb::IasIRunnable
     /// Member Variables
     ///
 
-    volatile uint32_t       mThreadControl;
-    IasThread   *    mTransmitThread;
-    device_t         *    mIgbDevice;
-    uint32_t                mQueueIndex;
+    volatile uint32_t     mThreadControl;
+    IasThread            *mTransmitThread;
+    device_t             *mIgbDevice;
+    uint32_t              mQueueIndex;
     IasAvbSrClass         mClass;
-    int32_t                 mRequestCount;
-    int32_t                 mResponseCount;
-    uint32_t                mCurrentBandwidth;
-    uint32_t                mCurrentMaxIntervalFrames;
-    uint32_t                mMaxFrameSizeHigh; // used calculate HiCredit for Class B/C
+    int32_t               mRequestCount;
+    int32_t               mResponseCount;
+    uint32_t              mCurrentBandwidth;
+    uint32_t              mCurrentMaxIntervalFrames;
+    uint32_t              mMaxFrameSizeHigh; // used calculate HiCredit for Class B/C
     bool                  mUseShaper;
-    uint32_t                mShaperBwRate;
+    uint32_t              mShaperBwRate;
     AvbStreamDataList     mSequence;
     AvbStreamSet          mActiveStreams;
     bool                  mDoReclaim;
     std::mutex            mLock;
     Diag                  mDiag;
     Config                mConfig;
-    IasAvbStreamHandlerEventInterface * mEventInterface;
+    IasAvbStreamHandlerEventInterface *mEventInterface;
     DltContext           *mLog;           // context for Log & Trace
-    // TO BE REPLACED Ias::IasIWatchdogInterface* mWatchdog;
+    IasWatchdog::IasWatchdogInterface *mWatchdog;
+    //IasWatchdog::IasSystemdWatchdogManager *mWatchdog;
     bool                  mFirstRun;
     bool                  mBTMEnable;
     bool                  mStrictPktOrderEn;

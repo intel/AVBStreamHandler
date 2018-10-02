@@ -12,7 +12,7 @@
 
 #include "media_transport/avb_streamhandler_api/IasAvbStreamHandlerTypes.hpp"
 #include "ias_visibility.h"
-#include <dlt_cpp_extension.hpp>
+#include <dlt/dlt_cpp_extension.hpp>
 #include <ostream>
 #include <string>
 
