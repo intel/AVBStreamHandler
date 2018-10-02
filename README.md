@@ -217,3 +217,45 @@ $ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -r
 
 Output should contain messages about sending (or receiving) packets with
 success.
+
+### Testing video streams with gstreamer elements
+
+AVB-SH also provides a GStreamer plugin with two elements, one sink and
+one source that transmit and receive, respectively, video to and from the
+network.
+
+Plugin file is `libias-media_transport-gst_avb_video_plugin.so` and its
+two elements are `avbvideosink` and `avbvideosrc`. The `avbvideosink`
+element is the last element on a GStreamer pipeline on the talker, and the
+`avbvideosrc` element is the first on a GStreamer pipeline on the
+listener.
+
+They are only built if GStreamer is available during build time. To run
+them, it is necessary to run `avb_streamhandler_demo` as described on
+previous section, for the MPEG-TS use case (currently, the elements are
+only compatible with MPEG-TS streams). Then, run a GStreamer pipeline with
+`gst-launch`, for instance:
+
+- On Master
+$ LD_LIBRARY_PATH=$AVB_DEPS/lib/:. GST_PLUGIN_PATH=./build gst-launch-1.0 videotestsrc pattern=ball ! clockoverlay ! vaapih264enc ! mpegtsmux ! avbvideosink
+
+- On Slave
+$ LD_LIBRARY_PATH=$AVB_DEPS/lib/:. GST_PLUGIN_PATH=./build gst-launch-1.0 avbvideosource ! typefind ! tsdemux ! decodebin ! videoconvert ! clockoverlay halignment=right ! xvimagesink display=:0
+
+The slave should show on the X display 0 (normally, the default one) a
+GStreamer window with the GStreamer "ball" video source pattern. Two
+clocks are also show: the one on the left comes from Master, the one on
+the right is added on the Slave pipeline.
+
+Both elements have a property "stream-name" that can be used to define
+which stream, configured in AVB-SH, the element will use. This allows a
+second stream to be sent. Using the same setup as before, it's possible to
+open one more stream using:
+
+- On Master
+$ LD_LIBRARY_PATH=$AVB_DEPS/lib/:. GST_PLUGIN_PATH=./build gst-launch-1.0 videotestsrc pattern=ball ! clockoverlay ! vaapih264enc ! mpegtsmux ! avbvideosink stream-name=media_transport.avb.mpegts_streaming.2
+
+- On Slave
+$ LD_LIBRARY_PATH=$AVB_DEPS/lib/:. GST_PLUGIN_PATH=./build gst-launch-1.0 avbvideosource stream-name=media_transport.avb.mpegts_streaming.8 ! typefind ! tsdemux ! decodebin ! videoconvert ! clockoverlay halignment=right ! xvimagesink display=:0
+
+And one can see another window displaying.
