@@ -5,12 +5,15 @@
  */
 #include <gst/gst.h>
 #include "gst/gstavbvideosink.h"
+#include "gst/gstavbvideosrc.h"
 
 static gboolean
 plugin_init(GstPlugin * plugin)
 {
     gst_element_register(plugin, "avbvideosink", GST_RANK_NONE,
             GST_TYPE_AVBVIDEOSINK);
+    gst_element_register(plugin, "avbvideosrc", GST_RANK_NONE,
+            GST_TYPE_AVBVIDEOSRC);
 
     return TRUE;
 }
