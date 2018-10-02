@@ -96,6 +96,7 @@ StreamParamsAvbRx Unittest2chSetupAvbRxNC[] =
 StreamParamsAvbVideoTx VideoPocSetupAvbVideoMpegTsMasterTx[] =
 {
     { 'L', 4000u, 1460, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, cIasAvbPtpClockDomainId, 0x91E0F00007812642u, 0x91E0F0000781u, 501u, true },
+    { 'L', 4000u, 1460, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, cIasAvbPtpClockDomainId, 0x91E0F00007812643u, 0x91E0F0000782u, 502u, true },
     cTerminator_StreamParamsAvbVideoTx
 };
 
@@ -111,6 +112,7 @@ StreamParamsAvbVideoTx VideoPocSetupAvbVideoMasterTx[] =
 StreamParamsAvbVideoRx VideoPocSetupAvbVideoMpegTsMasterRx[] =
 {
    { 'L', 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, 0x91E0F00007852646u, 0x91E0F0000785u, 507u },
+   { 'L', 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, 0x91E0F00007852647u, 0x91E0F0000786u, 508u },
    cTerminator_StreamParamsAvbVideoRx
 };
 
@@ -128,7 +130,9 @@ StreamParamsAvbVideoRx VideoPocSetupAvbVideoMasterRx[] =
 StreamParamsVideo VideoPocSetupLocalVideoMpegTsMaster[] =
 {
     { IasAvbStreamDirection::eIasAvbTransmitToNetwork, 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.1", 501u },
+    { IasAvbStreamDirection::eIasAvbTransmitToNetwork, 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.2", 502u },
     { IasAvbStreamDirection::eIasAvbReceiveFromNetwork,4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.7", 507u },
+    { IasAvbStreamDirection::eIasAvbReceiveFromNetwork,4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.8", 508u },
     cTerminator_StreamParamsVideo
 };
 
@@ -150,6 +154,7 @@ StreamParamsVideo VideoPocSetupLocalVideoMaster[] =
 StreamParamsAvbVideoTx VideoPocSetupAvbVideoMpegTsSlaveTx[] =
 {
     { 'L', 4000u, 1460, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, cIasAvbPtpClockDomainId, 0x91E0F00007852646u, 0x91E0F0000785u, 501u, true },
+    { 'L', 4000u, 1460, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, cIasAvbPtpClockDomainId, 0x91E0F00007852647u, 0x91E0F0000786u, 502u, true },
     cTerminator_StreamParamsAvbVideoTx
 };
 
@@ -165,6 +170,7 @@ StreamParamsAvbVideoTx VideoPocSetupAvbVideoSlaveTx[] =
 StreamParamsAvbVideoRx VideoPocSetupAvbVideoMpegTsSlaveRx[] =
 {
    { 'L', 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, 0x91E0F00007812642u, 0x91E0F0000781u, 507u },
+   { 'L', 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, 0x91E0F00007812643u, 0x91E0F0000782u, 508u },
    cTerminator_StreamParamsAvbVideoRx
 };
 
@@ -182,7 +188,9 @@ StreamParamsAvbVideoRx VideoPocSetupAvbVideoSlaveRx[] =
 StreamParamsVideo VideoPocSetupLocalVideoMpegTsSlave[] =
 {
     { IasAvbStreamDirection::eIasAvbTransmitToNetwork, 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.1", 501u },
+    { IasAvbStreamDirection::eIasAvbTransmitToNetwork, 4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.2", 502u },
     { IasAvbStreamDirection::eIasAvbReceiveFromNetwork,4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.7", 507u },
+    { IasAvbStreamDirection::eIasAvbReceiveFromNetwork,4000u, 1460u, IasAvbVideoFormat::eIasAvbVideoFormatIec61883, "media_transport.avb.mpegts_streaming.8", 508u },
     cTerminator_StreamParamsVideo
 };
 
