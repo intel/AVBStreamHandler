@@ -27,7 +27,9 @@ execute_process( COMMAND make
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/gptp/linux/build
 )
 
-
+# disable building doxygen documentation to temporarily fix issue caused while building documentation
+# TODO: Fix oxygen/ias_defines_doxygen.cmake to fix the real issue
+set( IAS_DISABLE_DOC 1 )
 
 # set release version for avb stream handler
 set( MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_MAJOR    0 )
