@@ -68,27 +68,6 @@ void IasSystemdWatchdogManager::notifyTimedOut()
   {
     DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR, "IasSystemdWatchdogManager cannot call sd_notify() because some watchdog interfaces timed out.");
   }
-
-  if ( (mWatchdogTimerRegistration!=nullptr) && (currentResetTimespan > 0LL) )
-  {
-    // Erase old timers in case of a manual call to notifyTimedOut().
-    (void)mWatchdogTimerRegistration->unregisterTimer(mWatchdogTimer);
-
-    uint64_t const nextTimeoutTimestamp = IasSystemdWatchdogManager::getCurrentRawTime() + currentResetTimespan;
-    mWatchdogTimer.setTimeoutInterval(currentResetTimespan);
-
-    IasWatchdogResult const setTimerResult = mWatchdogTimerRegistration->registerTimer(mWatchdogTimer);
-
-    if (setTimerResult.toString() == IasMediaTransportAvb::IasResult::cOk.toString())
-    //if ( IAS_FAILED(setTimerResult))
-    {
-      DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR, "IasSystemdWatchdogManager failed to set very high priority watchdog timer with timeout value (ms)", currentResetTimespan, setTimerResult);
-    }
-    else
-    {
-      mNextTimeoutTimestamp = nextTimeoutTimestamp;
-    }
-  }
 }
 
 void IasSystemdWatchdogManager::checkResetWatchdog()
@@ -162,11 +141,7 @@ IasWatchdogResult IasSystemdWatchdogManager::cleanup()
 {
   IasWatchdogResult result = IasMediaTransportAvb::IasResult::cOk;
 
-  if ( mWatchdogTimerRegistration!=nullptr )
-  {
-    (void)mWatchdogTimerRegistration->unregisterTimer(mWatchdogTimer);
-    mWatchdogTimerRegistration=nullptr;
-  }
+  mWatchdogTimerRegistration=nullptr;
   return result;
 }
 
