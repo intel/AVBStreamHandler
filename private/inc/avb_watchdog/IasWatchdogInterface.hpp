@@ -143,6 +143,7 @@ class IasWatchdogInterface
     /*!
      * @brief mutex to protect access to the mDueResetTime.
      */
+    /* TODO: Convert to std::atomic */
     mutable std::mutex mDueResetTimeMutex;
 
     /*!
