@@ -171,7 +171,7 @@ class IasSystemdWatchdogManager
     /*!
      * @brief mutex to lock the mWatchdogInterfaces object.
      */
-    mutable std::mutex mWatchdogInterfacesMutex;
+    mutable std::recursive_mutex mWatchdogInterfacesMutex;
 
     /*!
      * @brief List of all registered Watchdogs.
