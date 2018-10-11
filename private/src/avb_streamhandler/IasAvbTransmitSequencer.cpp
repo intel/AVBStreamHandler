@@ -217,7 +217,7 @@ IasAvbProcessingResult IasAvbTransmitSequencer::init(uint32_t queueIndex, IasAvb
   if (eIasAvbProcOK == result)
   {
     uint64_t val = 0u;
-    (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cXmitUseWatchdog, val);
+    (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cUseWatchdog, val);
 
     if ((0u != val) && (IasAvbStreamHandlerEnvironment::isWatchdogEnabled()))
     {
