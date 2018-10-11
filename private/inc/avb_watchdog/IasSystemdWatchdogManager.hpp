@@ -70,17 +70,6 @@ class IasSystemdWatchdogManager
     IasWatchdogResult cleanup();
 
     /*!
-     * @brief This function can be called at intervals for cases where there is a long running task running on the
-     * communicator preventing the ITimerInterface from timing out. This ensures the systemd watchdog is reset.
-     */
-    void checkResetWatchdog();
-
-    /*!
-     * @brief Force the watchdog reset manually.
-     */
-    void forceResetWatchdog();
-
-    /*!
      *  @copydoc IasIWatchdogManagerInterface::createWatchdog
      */
     virtual IasWatchdogInterface* createWatchdog();
@@ -157,11 +146,6 @@ class IasSystemdWatchdogManager
      * @brief The timer reset time.
      */
     uint64_t mResetTimespan;
-
-    /*!
-     * @brief The timestamp  of the next timeout we expect from ITimerInterface.
-     */
-    uint64_t mNextTimeoutTimestamp;
 
     /*!
      * @brief The timer object (registers and manages timeouts).
