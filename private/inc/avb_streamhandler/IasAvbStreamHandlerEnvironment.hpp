@@ -114,7 +114,7 @@ static const char cXmitPrefetchThresh[] = "transmit.window.threshold.prefetch"; 
 static const char cXmitResetMaxCount[] = "transmit.window.maxcount.reset"; // allowable max reset count per stream in a transmit window
 static const char cXmitDropMaxCount[] = "transmit.window.maxcount.drop"; // allowable max number of dropped packages in a transmit window
 static const char cXmitUseShaper[] = "transmit.shaper.enable"; // 0=disabled
-static const char cXmitUseWatchdog[] = "transmit.watchdog.enable"; // 0=disabled
+static const char cUseWatchdog[] = "watchdog.enable";
 static const char cXmitStrictPktOrder[] = "transmit.pktorder.enable"; // 1=on (default), 0=off
 static const char cXmitClkUpdateInterval[] = "transmit.clock.updateinterval"; // us
 static const char cPtpPdelayCount[] = "ptp.pdelaycount"; //
