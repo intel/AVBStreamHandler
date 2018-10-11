@@ -70,25 +70,6 @@ void IasSystemdWatchdogManager::notifyTimedOut()
   }
 }
 
-void IasSystemdWatchdogManager::checkResetWatchdog()
-{
-  if (   ( mResetTimespan > 0LL )
-      && (IasSystemdWatchdogManager::getCurrentRawTime() > mNextTimeoutTimestamp) )
-  {
-    DLT_LOG_CXX(mDltContext, DLT_LOG_INFO, "IasSystemdWatchdogManager::checkResetWatchdog trigger timeout explicitly");
-    notifyTimedOut();
-  }
-}
-
-void IasSystemdWatchdogManager::forceResetWatchdog()
-{
-  if ( mResetTimespan > 0LL )
-  {
-    DLT_LOG_CXX(mDltContext, DLT_LOG_VERBOSE, "IasSystemdWatchdogManager::forceResetWatchdog trigger systemd watchdog");
-    notifyTimedOut();
-  }
-}
-
 IasWatchdogResult IasSystemdWatchdogManager::init(std::shared_ptr<IasWatchdogTimerRegistration> watchdogTimerRegistration)
 {
   if(watchdogTimerRegistration == nullptr)
