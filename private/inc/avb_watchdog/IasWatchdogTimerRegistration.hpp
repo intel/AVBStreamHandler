@@ -58,43 +58,7 @@ public:
 
   virtual ~IasWatchdogTimerRegistration() = default;
 
-  /**
-    * \brief Notifies all listeners about a new Timeout.
-    */
-  IasWatchdogResult registerTimer(IasWatchdogTimer const &timer)
-  {
-    IasWatchdogResult result = IasWatchdogResult::cAcquireLockFailed;
-    (void) timer;
-    std::lock_guard<std::mutex>  guard(mRegistrationMutex);
-    /*
-    if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-    //if ( IasMediaTransportAvb::IAS_SUCCEEDED(guard) )
-    {
-      //result = registerTimerLocked(timer);
-    }*/
-    return result;
-  }
-
-  /**
-    * \brief Notifies all listeners about the removal of a Timeout.
-    */
-  IasWatchdogResult unregisterTimer(IasWatchdogTimer const &timer)
-  {
-    IasWatchdogResult result = IasWatchdogResult::cAcquireLockFailed;
-    (void) timer;
-    std::lock_guard<std::mutex>  guard(mRegistrationMutex);
-    /*
-    if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk))
-    //if ( IasMediaTransportAvb::IAS_SUCCEEDED(guard) )
-    {
-      result = unregisterTimerLocked(timer);
-    }*/
-    return result;
-  }
-
 protected:
-  //virtual IasWatchdogResult registerTimerLocked(IasWatchdogTimer const &timer) = 0;
-  //virtual IasWatchdogResult unregisterTimerLocked(IasWatchdogTimer const &timer) = 0;
 
   DltContext mDltContext;
   std::mutex mRegistrationMutex;
