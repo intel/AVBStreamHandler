@@ -173,7 +173,7 @@ IasWatchdogResult IasSystemdWatchdogManager::cleanup()
 IasWatchdogInterface* IasSystemdWatchdogManager::createWatchdog()
 {
   IasWatchdogInterface * watchdogInterface = nullptr;
-  std::lock_guard<std::mutex>  mutexGuard(mWatchdogInterfacesMutex);
+  std::lock_guard<std::recursive_mutex>  mutexGuard(mWatchdogInterfacesMutex);
 
   if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
   //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
@@ -195,7 +195,7 @@ IasWatchdogInterface* IasSystemdWatchdogManager::createWatchdog(uint32_t timeout
 {
   IasWatchdogInterface * watchdogInterface = nullptr;
 
-  std::lock_guard<std::mutex> mutexGuard(mWatchdogInterfacesMutex);
+  std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
 
   if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
   //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
@@ -251,7 +251,7 @@ IasWatchdogResult IasSystemdWatchdogManager::removeWatchdogInternal(IasWatchdogI
   }
   IasWatchdogResult result = IasMediaTransportAvb::IasResult::cOk;
 
-  std::lock_guard<std::mutex> mutexGuard(mWatchdogInterfacesMutex);
+  std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
 
   if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
   //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
@@ -299,7 +299,7 @@ uint64_t IasSystemdWatchdogManager::getCurrentRawTime() const
 bool IasSystemdWatchdogManager::allWatchdogInterfacesValid() const
 {
   bool allValid = true;
-  std::lock_guard<std::mutex> mutexGuard(mWatchdogInterfacesMutex);
+  std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
   if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
   //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
   {
