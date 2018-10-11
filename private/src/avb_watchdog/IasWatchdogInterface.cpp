@@ -77,23 +77,11 @@ IasWatchdogResult IasWatchdogInterface::registerWatchdog(uint32_t timeout, std::
   {
     std::lock_guard<std::mutex> mutexGuard(mDueResetTimeMutex);
 
-    if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-    //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
-    {
-      mTimeout = timeout;
-      mProcessId = getpid();
-      mThreadId =  static_cast<uint64_t>(pthread_self()); //(unsigned int) pthread_self();
-      mName = watchdogName;
-      mDueResetTime = 0u;
-    }
-    else
-    {
-      result = IasWatchdogResult::cAcquireLockFailed;
-      DLT_LOG_CXX(
-        mDltContext,
-        DLT_LOG_ERROR,
-        "IasWatchdogInterface::registerWatchdog(): Lock of mutex failed unexpectedly", *this);
-    }
+    mTimeout = timeout;
+    mProcessId = getpid();
+    mThreadId =  static_cast<uint64_t>(pthread_self()); //(unsigned int) pthread_self();
+    mName = watchdogName;
+    mDueResetTime = 0u;
   }
 
   return result;
@@ -136,26 +124,14 @@ IasWatchdogResult IasWatchdogInterface::unregisterWatchdog()
   {
     std::lock_guard<std::mutex> mutexGuard(mDueResetTimeMutex);
 
-    if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-    //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
+    if (!mPreconfigured)
     {
-      if (!mPreconfigured)
-      {
-        mTimeout = 0u;
-        mName = "";
-      }
-      mProcessId = 0u;
-      mThreadId = 0u;
-      mDueResetTime = 0u;
+      mTimeout = 0u;
+      mName = "";
     }
-    else
-    {
-      result = IasWatchdogResult::cAcquireLockFailed;
-      DLT_LOG_CXX(
-        mDltContext,
-        DLT_LOG_ERROR,
-        "IasWatchdogInterface::unregisterWatchdog(): Lock of mutex failed unexpectedly", *this);
-    }
+    mProcessId = 0u;
+    mThreadId = 0u;
+    mDueResetTime = 0u;
   }
   return result;
 }
@@ -167,18 +143,7 @@ uint64_t IasWatchdogInterface::getDueResetTime() const
   dueResetTime = dueResetTime + 1000000; //1ms
   std::lock_guard<std::mutex> mutexGuard(mDueResetTimeMutex);
 
-  if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-  //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
-  {
-    dueResetTime = mDueResetTime;
-  }
-  else
-  {
-    DLT_LOG_CXX(
-        mDltContext,
-        DLT_LOG_ERROR,
-        "IasWatchdogInterface::getDueResetTime(): Lock of mutex failed unexpectedly", *this);
-  }
+  dueResetTime = mDueResetTime;
   return dueResetTime;
 }
 
@@ -223,32 +188,20 @@ IasWatchdogResult IasWatchdogInterface::reset()
     {
       std::lock_guard<std::mutex> mutexGuard(mDueResetTimeMutex);
 
-      if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-      //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
-      {
-        mDueResetTime =  currentTime + (mTimeout * 1000000); // 1 ms change to 1000000 ns for monotonic raw
-        DLT_LOG_CXX(
-        mDltContext,
-        DLT_LOG_VERBOSE,
-        "Resetting watchdog", *this);
+      mDueResetTime =  currentTime + (mTimeout * 1000000); // 1 ms change to 1000000 ns for monotonic raw
+      DLT_LOG_CXX(
+      mDltContext,
+      DLT_LOG_VERBOSE,
+      "Resetting watchdog", *this);
 
-        if( mTimeoutReported )
-        {
-            DLT_LOG_CXX(
+      if( mTimeoutReported )
+      {
+          DLT_LOG_CXX(
               mDltContext,
               DLT_LOG_VERBOSE,
               "Resetting watchdog - Watchdog recovered", *this);
-        }
-        mTimeoutReported = false;
       }
-      else
-      {
-        result = IasWatchdogResult::cAcquireLockFailed;
-        DLT_LOG_CXX(
-          mDltContext,
-          DLT_LOG_ERROR,
-          "IasWatchdogInterface::reset(): Lock of mutex failed unexpectedly", *this);
-      }
+      mTimeoutReported = false;
     }
     else
     {

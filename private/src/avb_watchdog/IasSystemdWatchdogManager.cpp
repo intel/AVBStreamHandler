@@ -131,19 +131,13 @@ IasWatchdogInterface* IasSystemdWatchdogManager::createWatchdog()
   IasWatchdogInterface * watchdogInterface = nullptr;
   std::lock_guard<std::recursive_mutex>  mutexGuard(mWatchdogInterfacesMutex);
 
-  if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-  //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
+  watchdogInterface = new IasWatchdogInterface(*this, mDltContext);
+
+  if ( watchdogInterface )
   {
-    watchdogInterface = new IasWatchdogInterface(*this, mDltContext);
-    if ( watchdogInterface )
-    {
-      mWatchdogInterfaces.push_back(watchdogInterface);
-    }
+    mWatchdogInterfaces.push_back(watchdogInterface);
   }
-  else
-  {
-    DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR, "IasSystemdWatchdogManager::createWatchdog() failed to lock mutex unexpectedly");
-  }
+
   return watchdogInterface;
 }
 
@@ -153,9 +147,6 @@ IasWatchdogInterface* IasSystemdWatchdogManager::createWatchdog(uint32_t timeout
 
   std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
 
-  if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-  //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
-  {
     watchdogInterface = new IasWatchdogInterface(*this, mDltContext);
     if (watchdogInterface)
     {
@@ -163,13 +154,8 @@ IasWatchdogInterface* IasSystemdWatchdogManager::createWatchdog(uint32_t timeout
       watchdogInterface->setName(watchdogName);
       mWatchdogInterfaces.push_back(watchdogInterface);
     }
-  }
-  else
-  {
-    DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR,
-                "IasSystemdWatchdogManager::createWatchdog() failed to lock mutex unexpectedly");
-  }
-  return watchdogInterface;
+
+    return watchdogInterface;
 }
 
 IasWatchdogResult IasSystemdWatchdogManager::destroyWatchdog(IasWatchdogInterface* watchdog)
@@ -209,9 +195,6 @@ IasWatchdogResult IasSystemdWatchdogManager::removeWatchdogInternal(IasWatchdogI
 
   std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
 
-  if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-  //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
-  {
     auto searchResult = std::find(mWatchdogInterfaces.begin(), mWatchdogInterfaces.end(), watchdogInterface);
     if ( searchResult != mWatchdogInterfaces.end() )
     {
@@ -230,12 +213,6 @@ IasWatchdogResult IasSystemdWatchdogManager::removeWatchdogInternal(IasWatchdogI
       }
       result = IasMediaTransportAvb::IasResult::cObjectNotFound;
     }
-  }
-  else
-  {
-    DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR, "IasSystemdWatchdogManager::destroyWatchdog() failed to lock mutex unexpectedly", *watchdogInterface);
-    result = IasWatchdogResult::cAcquireLockFailed;
-  }
 
   return result;
 }
@@ -256,34 +233,29 @@ bool IasSystemdWatchdogManager::allWatchdogInterfacesValid() const
 {
   bool allValid = true;
   std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
-  if ( IasMediaTransportAvb::IAS_SUCCEEDED(IasMediaTransportAvb::IasResult::cOk) )
-  //if ( IasMediaTransportAvb::IAS_SUCCEEDED(mutexGuard) )
+
+  uint64_t const now = IasSystemdWatchdogManager::getCurrentRawTime();
+  for ( auto watchdogInterface : mWatchdogInterfaces )
   {
+    uint64_t const dueResetTime = watchdogInterface->getDueResetTime();
 
-    uint64_t const now = IasSystemdWatchdogManager::getCurrentRawTime();
-    for ( auto watchdogInterface : mWatchdogInterfaces )
+    if ( ( dueResetTime != 0u ) && (dueResetTime <= now) )
     {
-	    uint64_t const dueResetTime = watchdogInterface->getDueResetTime();
-      //DLT_LOG_CXX(mDltContext, DLT_LOG_INFO, "IasSystemdWatchdogManager::allWatchdogInterfacesValid() found timed out watchdog with dueResetTime:", dueResetTime, " now:", now);
-
-      if ( ( dueResetTime != 0u ) && (dueResetTime <= now) )
-      {
-        allValid = false;
-        DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR, "IasSystemdWatchdogManager::allWatchdogInterfacesValid() found timedout watchdog", *watchdogInterface);
-      }
-      else if ( dueResetTime == 0u  )
-      {
-        /*This happens if reset was not called after first initialization of a watchdog interface*/
-        allValid = false;
-        DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR, "IasSystemdWatchdogManager::allWatchdogInterfacesValid() found un-initialized watchdog timeout", *watchdogInterface);
-      }
+      allValid = false;
+      DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR,
+                  "IasSystemdWatchdogManager::allWatchdogInterfacesValid() found timedout watchdog",
+                  *watchdogInterface);
+    }
+    else if ( dueResetTime == 0u  )
+    {
+      /*This happens if reset was not called after first initialization of a watchdog interface*/
+      allValid = false;
+      DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR,
+                "IasSystemdWatchdogManager::allWatchdogInterfacesValid() found un-initialized watchdog timeout",
+                *watchdogInterface);
     }
   }
-  else
-  {
-    DLT_LOG_CXX(mDltContext, DLT_LOG_ERROR, "IasSystemdWatchdogManager::allWatchdogInterfacesValid() failed to lock mutex unexpectedly");
-    allValid = false;
-  }
+
   return allValid;
 }
 
