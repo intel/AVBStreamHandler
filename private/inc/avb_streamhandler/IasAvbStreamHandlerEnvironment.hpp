@@ -199,7 +199,7 @@ class IasAvbStreamHandlerEnvironment : private virtual IasAvbConfigRegistryInter
     static bool getConfigValue(const std::string &key, std::string &value);
     static bool doGetConfigValue(const std::string &key, uint64_t &value);
 
-    static DltContext &getDltContext(const std::string &dltContextName);
+    static __attribute__((weak)) DltContext &getDltContext(const std::string &dltContextName);
 
     static void notifySchedulingIssue(DltContext &dltContext, const std::string &text, const uint64_t elapsed,
                                       const uint64_t limit);
