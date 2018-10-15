@@ -18,6 +18,7 @@
 
 
 #include "avb_video_common/IasAvbVideoCondVar.hpp"
+#include "avb_video_common/IasAvbVideoLog.hpp"
 #include "avb_video_common/IasAvbVideoCommonTypes.hpp"
 #include "avb_video_common/IasAvbVideoRingBufferResult.hpp"
 #include "internal/audio/common/IasIntProcCondVar.hpp"
@@ -25,6 +26,7 @@
 
 #include <atomic>
 #include <boost/interprocess/offset_ptr.hpp>
+#include <dlt/dlt.h>
 
 // Using mutex and condvar from audio/common
 using IasAudio::IasIntProcMutex;
@@ -306,6 +308,13 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
       }
       return nullptr;
     };
+
+    /* As this class lives on shared memory, it can *not* save anything that
+     * is related to any process, like the log context. It needs to get it every
+     * time, so to get the right log context for the calling process */
+    DltContext &getLogContext() {
+        return IasAvbVideoLog::getDltContext("_RBF");
+    }
 
     //
     // Member variables
