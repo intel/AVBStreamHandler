@@ -19,6 +19,7 @@
 #include "avb_video_common/IasAvbVideoCommonTypes.hpp"
 #include "avb_video_common/IasAvbVideoRingBufferResult.hpp"
 
+#include <dlt/dlt.h>
 
 namespace IasMediaTransportAvb {
 
@@ -51,6 +52,7 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBuffer
      * @param[in]  dataBuf        The real data buffer
      * @param[in]  shared         Reserved for later use
      * @param[in]  ringBufShm     Pointer to the IasAvbVideoRingBufferShm
+     * @param[in]  dltContext     Log context
      *
      * @returns                   eIasRingBuffOk on success, otherwise an error code.
      */

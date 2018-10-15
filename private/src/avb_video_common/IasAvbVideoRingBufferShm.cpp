@@ -16,6 +16,8 @@
 #include "avb_video_common/IasAvbVideoRingBufferShm.hpp"
 #include "avb_helper/ias_debug.h"
 
+#include <dlt/dlt_cpp_extension.hpp>
+
 // using IasLockGuard from audio/common
 using IasAudio::IasLockGuard;
 
@@ -77,7 +79,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::init(uint32_t packetSize, uin
     mInitialized = true;
   }
 
-  fprintf(stderr, "INIT: mBufferSize: %u mNumBuffers: %u \n", mBufferSize, mNumBuffers);
+  DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "mBufferSize:", mBufferSize, "mNumBuffers:", mNumBuffers);
 
   return result;
 }
@@ -138,7 +140,6 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
     }
     else
     {
-      fprintf(stderr, "beginAccess: ");
       uint32_t bufferLevel = calculateReaderBufferLevel(reader);
       *offset = reader->offset;
 
@@ -154,7 +155,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
       reader->allowedToRead = *numBuffers;
       updateReaderAccess(reader);
 
-      fprintf(stderr, "Begin Read access (%d). *numBuffers: %u *offset: %u reader->offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, reader->offset, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+      DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "Begin read access (", pid, ") *numBuffers:", *numBuffers, "*offset:", *offset, "reader->offset:", reader->offset, "mBufferLevel:", mBufferLevel);
     }
   }
   else // write access
@@ -190,7 +191,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
 
       mAllowedToWrite = *numBuffers;
 
-      fprintf(stderr, "Begin Write access (%d). *numBuffers: %u *offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, bufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+      DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "Begin write access (", pid, ") *numBuffers:", *numBuffers, "*offset:", *offset, "mBufferLevel:", mBufferLevel);
     }
   }
 
@@ -217,7 +218,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
     {
       result = eIasRingBuffInvalidParam;
 
-      fprintf(stderr, "End access FAIL: mBufferLevel: %u numBuffers: %u offset: %u CalcBufLevel: %u allowedToRead: %u\n", mBufferLevel, numBuffers, offset, (mWriteOffset - mReadOffset) % (mNumBuffers + 1), reader->allowedToRead);
+      DLT_LOG_CXX(getLogContext(), DLT_LOG_INFO, LOG_PREFIX, "End access FAIL: mBufferLevel", mBufferLevel, "numBuffers", numBuffers, "offset", offset, "allowedToRead", reader->allowedToRead);
     }
     else
     {
@@ -232,7 +233,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
 
       updateReaderAccess(reader);
 
-      fprintf(stderr, "End Read access(%d). numBuffers: %u offset: %u reader->offset: %u \n", pid, numBuffers, offset, reader->offset);
+      DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "End read access (", pid, ") numBuffers:", numBuffers, "offset:", offset, "reader->offset", reader->offset);
     }
   }
   else
@@ -452,7 +453,8 @@ uint32_t IasAvbVideoRingBufferShm::updateSmallerReaderOffset()
   {
     if (mReaders[i].pid != 0)
     {
-      fprintf(stderr, "\t\tAGGREGATE: reader %d - offset %u\n", mReaders[i].pid, mReaders[i].offset);
+      DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "reader: ", mReaders[i].pid, "offset:", mReaders[i].offset);
+
       if (mReaders[i].offset < smallerOffset)
       {
         smallerOffset = mReaders[i].offset;
@@ -466,7 +468,8 @@ uint32_t IasAvbVideoRingBufferShm::updateSmallerReaderOffset()
     return smallerOffset;
   }
 
-  fprintf(stderr, "AGGREGATE: smallerOffset: %u mNumBuffers: %u mBufferLevel: %u CalcBufLevel: %u\n", smallerOffset, mNumBuffers, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+  DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "smallerOffset:", smallerOffset, "mBufferLevel:", mBufferLevel);
+
   // When all readers read everything, time to reset their offsets
   if (smallerOffset == mNumBuffers)
   {
@@ -500,7 +503,7 @@ void IasAvbVideoRingBufferShm::aggregateReaderOffset()
     mReadOffset = smallerOffset;
   }
 
-  fprintf(stderr, "\tAGGREGATE mBufferLevel: %u mReadOffset: %u mNumBuffers: %u [mWriteOffset: %u] CalcBufLevel: %u\n", mBufferLevel, mReadOffset, mNumBuffers, mWriteOffset, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+  DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "mBufferLevel:", mBufferLevel, "mReadOffset:", mReadOffset, "mWriteOffset:", mWriteOffset);
 }
 
 uint32_t IasAvbVideoRingBufferShm::calculateReaderBufferLevel(RingBufferReader *reader)
@@ -530,7 +533,8 @@ uint32_t IasAvbVideoRingBufferShm::calculateReaderBufferLevel(RingBufferReader *
       bufferLevel = mNumBuffers - reader->offset + writeOffset;
     }
 
-    fprintf(stderr, "CALCULATEREADERBUFFERLEVEL. Buffer level for pid %d: %u\n", reader->pid, bufferLevel);
+    DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "Buffer level for pid", reader->pid, ", ", bufferLevel);
+
     return bufferLevel;
 }
 
@@ -558,7 +562,7 @@ void IasAvbVideoRingBufferShm::purgeUnresponsiveReaders()
     {
       uint64_t lastAccess = mReaders[i].lastAccess;
       if ((now > lastAccess) && ((now - lastAccess) > READER_TIMEOUT_NS)) {
-        fprintf(stderr, "Purging reader %d after %lu ns\n", mReaders[i].pid, (now - lastAccess));
+        DLT_LOG_CXX(getLogContext(), DLT_LOG_INFO, "Purging reader", mReaders[i].pid, "after", (now - lastAccess), "ns");
         mReaders[i].pid = 0;
         mReaders[i].offset = 0;
         mReaders[i].lastAccess = 0;
