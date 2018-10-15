@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <dlt/dlt.h>
 
 #if defined( __cplusplus )
 extern "C"
@@ -78,6 +79,18 @@ struct ias_avbvideobridge_sender;
  */
 struct ias_avbvideobridge_receiver;
 
+/**
+ * @brief Register a DLT log context for avbvideobridge.
+ *
+ * For applications not linked to AVB-SH (the non AVB-SH side of the bridge),
+ * this function allows a default DLT context to be defined for log generated
+ * by avbvideobridge code. If no DLT context is registered, avbvideobridge
+ * code will use a dummy DLT context.
+ *
+ * @param[in] dlt_context DLT context to be used, or NULL to unregister
+ * previously registered context.
+ */
+void ias_avbvideobridge_register_log_context(DltContext *dlt_context);
 
 /**
  * @brief Create a sender instance of the avbvideobridge.
