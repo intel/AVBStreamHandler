@@ -7,9 +7,19 @@
 #include "gst/gstavbvideosink.h"
 #include "gst/gstavbvideosrc.h"
 
+#include <dlt/dlt.h>
+
+DLT_DECLARE_CONTEXT(log_ctx);
+
 static gboolean
 plugin_init(GstPlugin * plugin)
 {
+    /* Log parameters to debug avb_video_bridge. Can be changed to help debug */
+    dlt_register_context_ll_ts(&log_ctx, "_VBDG", "Context for AVB Video Bridge",
+            DLT_LOG_INFO, DLT_TRACE_STATUS_OFF);
+    ias_avbvideobridge_register_log_context(&log_ctx);
+    dlt_enable_local_print();
+
     gst_element_register(plugin, "avbvideosink", GST_RANK_NONE,
             GST_TYPE_AVBVIDEOSINK);
     gst_element_register(plugin, "avbvideosrc", GST_RANK_NONE,
