@@ -13,7 +13,7 @@
 
 #include "avb_video_common/IasAvbVideoShmConnection.hpp"
 #include "avb_video_common/IasAvbVideoRingBufferFactory.hpp"
-#include "avb_streamhandler/IasAvbStreamHandlerEnvironment.hpp"
+#include "avb_video_common/IasAvbVideoLog.hpp"
 
 #include <dlt/dlt_cpp_extension.hpp>
 
@@ -29,16 +29,13 @@ static const std::string cClassName = "IasAvbVideoShmConnection::";
  *  Constructor.
  */
 IasAvbVideoShmConnection::IasAvbVideoShmConnection(bool isCreator)
-//  : mLog(&IasAvbStreamHandlerEnvironment::getDltContext("_AVC"))
   : mLog(nullptr)
   , mRingBuffer(nullptr)
   , mIsCreator(isCreator)
   , mConnectionName()
   , mGroupName()
 {
-  // Need to do it here since this class is also used on client side where IasAvbStreamHandlerEnvironment isn't available
-  mLog = new DltContext();
-  dlt_register_context(mLog, "_AVC", "Context for video SHM connection");
+  mLog = &IasAvbVideoLog::getDltContext("_AVC");
 
   DLT_LOG_CXX(*mLog, DLT_LOG_VERBOSE, LOG_PREFIX);
 }
@@ -83,10 +80,6 @@ void IasAvbVideoShmConnection::cleanup()
   }
   mConnectionName.clear();
   mGroupName.clear();
-
-  dlt_unregister_context(mLog);
-  delete(mLog);
-  mLog = nullptr;
 }
 
 

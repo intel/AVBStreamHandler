@@ -12,10 +12,10 @@
  */
 
 #include "audio/common/audiobuffer/IasMemoryAllocator.hpp"
+#include "avb_video_common/IasAvbVideoLog.hpp"
 #include "avb_video_common/IasAvbVideoRingBufferFactory.hpp"
 #include "avb_video_common/IasAvbVideoRingBuffer.hpp"
 #include "avb_video_common/IasAvbVideoRingBufferShm.hpp"
-#include "avb_streamhandler/IasAvbStreamHandlerEnvironment.hpp"
 
 #include <dlt/dlt_cpp_extension.hpp>
 
@@ -23,7 +23,6 @@ using IasAudio::IasMemoryAllocator;
 
 
 namespace IasMediaTransportAvb {
-
 
 static const std::string cClassName = "IasAvbVideoRingBufferFactory::";
 #define LOG_PREFIX cClassName + __func__ + "(" + std::to_string(__LINE__) + "):"
@@ -38,12 +37,11 @@ IasAvbVideoRingBufferFactory*  IasAvbVideoRingBufferFactory::getInstance()
 
 
 IasAvbVideoRingBufferFactory::IasAvbVideoRingBufferFactory()
-//  : mLog(&IasAvbStreamHandlerEnvironment::getDltContext("_RBF"))
   : mLog(nullptr)
   , mMemoryMap()
 {
-  mLog = new DltContext();
-  dlt_register_context(mLog, "_RBF", "Context for Ringbuffer");
+  mLog = &IasAvbVideoLog::getDltContext("_RBF");
+
   DLT_LOG_CXX(*mLog, DLT_LOG_VERBOSE, LOG_PREFIX);
 }
 
@@ -51,10 +49,6 @@ IasAvbVideoRingBufferFactory::IasAvbVideoRingBufferFactory()
 IasAvbVideoRingBufferFactory::~IasAvbVideoRingBufferFactory()
 {
   DLT_LOG_CXX(*mLog, DLT_LOG_VERBOSE, LOG_PREFIX);
-
-  dlt_unregister_context(mLog);
-  delete(mLog);
-  mLog = nullptr;
 }
 
 
