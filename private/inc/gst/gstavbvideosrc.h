@@ -8,6 +8,8 @@
 
 #include <gst/base/gstpushsrc.h>
 
+#include <dlt/dlt.h>
+
 #include "media_transport/avb_video_bridge/IasAvbVideoBridge.h"
 
 G_BEGIN_DECLS
@@ -24,6 +26,8 @@ typedef struct _GstAvbVideoSrcClass GstAvbVideoSrcClass;
 struct _GstAvbVideoSrc
 {
     GstPushSrc base_avbvideosrc;
+
+    DltContext log;
 
     struct ias_avbvideobridge_receiver *receiver;
     GAsyncQueue *queue;
