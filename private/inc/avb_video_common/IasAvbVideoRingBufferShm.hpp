@@ -234,6 +234,7 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
     struct RingBufferReader {
         pid_t pid;
         uint32_t offset;
+        std::atomic<uint64_t> lastAccess;
     };
 
     /*!
@@ -275,6 +276,16 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      * @returns     reader buffer level.
      */
     uint32_t calculateReaderBufferLevel(RingBufferReader *reader);
+
+    /*!
+     * @brief updates lastAccess for reader, so it's possible to track reader death by timeout
+     */
+    void updateReaderAccess(RingBufferReader *reader);
+
+    /*!
+     * @brief Removes any reader whose lastAccess is bigger than a defined threshold (a presumably dead reader).
+     */
+    void purgeUnresponsiveReaders();
 
     /*!
      * @brief Returns a RingBufferReader entry for a reader, given its id
