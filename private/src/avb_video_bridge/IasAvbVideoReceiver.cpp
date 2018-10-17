@@ -82,6 +82,11 @@ ias_avbvideobridge_result IasAvbVideoReceiver::init()
     result = createThread();
   }
 
+  if (IAS_AVB_RES_OK == result)
+  {
+    result = mRingBuffer->addReader(getpid()) == eIasRingBuffOk ? IAS_AVB_RES_OK : IAS_AVB_RES_FAILED;
+  }
+
   return result;
 }
 
@@ -95,6 +100,10 @@ void IasAvbVideoReceiver::cleanup()
     // Cancel the wait for condition variable
     pthread_cancel(mWorkerThread->native_handle());
     mWorkerThread->join();
+
+    // Reader is only added if thread was properly created
+    // So we remove it only if we added it
+    mRingBuffer->removeReader(getpid());
 
     delete mWorkerThread;
     mWorkerThread = nullptr;
@@ -140,7 +149,7 @@ void IasAvbVideoReceiver::workerThread()
   while (mIsRunning == true)
   {
     // Wait for incoming package
-    IasVideoRingBufferResult vres = mRingBuffer->waitRead(1, mTimeout);
+    IasVideoRingBufferResult vres = mRingBuffer->waitRead(getpid(), 1, mTimeout);
     if (vres == eIasRingBuffTimeOut)
     {
       result = IAS_AVB_RES_TIMEOUT;
@@ -152,15 +161,19 @@ void IasAvbVideoReceiver::workerThread()
       void *basePtr = nullptr;
       uint32_t numPacketsTransferred = 0u;
 
-      if (eIasRingBuffOk != (vres = mRingBuffer->beginAccess(eIasRingBufferAccessRead, &basePtr, &offset, &numPackets)))
+      if (eIasRingBuffOk != (vres = mRingBuffer->beginAccess(eIasRingBufferAccessRead, getpid(), &basePtr, &offset, &numPackets)))
       {
-        vres = mRingBuffer->endAccess(eIasRingBufferAccessRead, 0, 0);
+        vres = mRingBuffer->endAccess(eIasRingBufferAccessRead, getpid(), 0, 0);
         AVB_ASSERT(vres == eIasRingBuffOk);
         (void)vres;
         result = IAS_AVB_RES_FAILED;
       }
       else
       {
+        if (numPackets == 0) {
+            mRingBuffer->endAccess(eIasRingBufferAccessRead, getpid(), offset, numPackets);
+            continue;
+        }
         // Calculation of the data position within the ring buffer
         uint8_t *dataPtr = static_cast<uint8_t*>(basePtr) + (offset * mRingBufferSize);
 
@@ -201,7 +214,7 @@ void IasAvbVideoReceiver::workerThread()
 
         numPacketsTransferred = numPackets;
 
-        vres = mRingBuffer->endAccess(eIasRingBufferAccessRead, offset, numPacketsTransferred);
+        vres = mRingBuffer->endAccess(eIasRingBufferAccessRead, getpid(), offset, numPacketsTransferred);
         AVB_ASSERT(vres == eIasRingBuffOk);
       }
     }

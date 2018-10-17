@@ -92,10 +92,10 @@ ias_avbvideobridge_result IasAvbVideoSender::sendPacketH264(ias_avbvideobridge_b
     }
     else
     {
-      IasVideoRingBufferResult result = mRingBuffer->beginAccess(eIasRingBufferAccessWrite, &basePtr, &offset, &numPackets);
+      IasVideoRingBufferResult result = mRingBuffer->beginAccess(eIasRingBufferAccessWrite, getpid(), &basePtr, &offset, &numPackets);
       if (eIasRingBuffOk != result)
       {
-        (void) mRingBuffer->endAccess(eIasRingBufferAccessWrite, offset, numPacketsTransferred);
+        (void) mRingBuffer->endAccess(eIasRingBufferAccessWrite, getpid(), offset, numPacketsTransferred);
         res = IAS_AVB_RES_NO_SPACE;
       }
       else
@@ -111,7 +111,7 @@ ias_avbvideobridge_result IasAvbVideoSender::sendPacketH264(ias_avbvideobridge_b
           numPacketsTransferred++;
         }
 
-        if (mRingBuffer->endAccess(eIasRingBufferAccessWrite, offset, numPacketsTransferred))
+        if (mRingBuffer->endAccess(eIasRingBufferAccessWrite, getpid(), offset, numPacketsTransferred))
         {
           res = IAS_AVB_RES_FAILED;
         }
@@ -146,10 +146,10 @@ ias_avbvideobridge_result IasAvbVideoSender::sendPacketMpegTs(bool sph, ias_avbv
     }
     else
     {
-      IasVideoRingBufferResult result = mRingBuffer->beginAccess(eIasRingBufferAccessWrite, &basePtr, &offset, &numPackets);
+      IasVideoRingBufferResult result = mRingBuffer->beginAccess(eIasRingBufferAccessWrite, getpid(), &basePtr, &offset, &numPackets);
       if (eIasRingBuffOk != result)
       {
-        (void) mRingBuffer->endAccess(eIasRingBufferAccessWrite, offset, numPacketsTransferred);
+        (void) mRingBuffer->endAccess(eIasRingBufferAccessWrite, getpid(), offset, numPacketsTransferred);
         res = IAS_AVB_RES_NO_SPACE;
       }
       else
@@ -166,7 +166,7 @@ ias_avbvideobridge_result IasAvbVideoSender::sendPacketMpegTs(bool sph, ias_avbv
           numPacketsTransferred++;
         }
 
-        if (mRingBuffer->endAccess(eIasRingBufferAccessWrite, offset, numPacketsTransferred))
+        if (mRingBuffer->endAccess(eIasRingBufferAccessWrite, getpid(), offset, numPacketsTransferred))
         {
           return IAS_AVB_RES_FAILED;
         }

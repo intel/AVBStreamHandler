@@ -22,6 +22,8 @@ using IasAudio::IasLockGuard;
 
 namespace IasMediaTransportAvb {
 
+static const std::string cClassName = "IasAvbVideoRingBufferShm::";
+#define LOG_PREFIX cClassName + __func__ + "(" + std::to_string(__LINE__) + "):"
 
 IasAvbVideoRingBufferShm::IasAvbVideoRingBufferShm()
   : mBufferSize(0u)
@@ -41,6 +43,8 @@ IasAvbVideoRingBufferShm::IasAvbVideoRingBufferShm()
   , mCondWrite()
   , mReadWaitLevel(0)
   , mWriteWaitLevel(0)
+  , mMutexReaders()
+  , mReaders{}
 {
   // Nothing to do here
 }
@@ -67,11 +71,13 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::init(uint32_t packetSize, uin
     mInitialized = true;
   }
 
+  fprintf(stderr, "INIT: mBufferSize: %u mNumBuffers: %u \n", mBufferSize, mNumBuffers);
+
   return result;
 }
 
 
-IasVideoRingBufferResult IasAvbVideoRingBufferShm::updateAvailable(IasRingBufferAccess access, uint32_t *numBuffers)
+IasVideoRingBufferResult IasAvbVideoRingBufferShm::updateAvailable(IasRingBufferAccess access, pid_t pid, uint32_t *numBuffers)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
 
@@ -85,7 +91,16 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::updateAvailable(IasRingBuffer
   }
   else if (access == eIasRingBufferAccessRead)
   {
-    *numBuffers = mBufferLevel;
+    RingBufferReader *reader = findReader(pid);
+
+    if (reader == nullptr)
+    {
+      result = eIasRingBuffInvalidParam;
+    }
+    else
+    {
+      *numBuffers = calculateReaderBufferLevel(reader);
+    }
   }
   else
   {
@@ -96,7 +111,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::updateAvailable(IasRingBuffer
 }
 
 
-IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAccess access, uint32_t* offset, uint32_t* numBuffers)
+IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAccess access, pid_t pid, uint32_t* offset, uint32_t* numBuffers)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
 
@@ -110,24 +125,27 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
   }
   else if (eIasRingBufferAccessRead == access)
   {
-    if (mReadInProgress)
+    RingBufferReader *reader = findReader(pid);
+    if (reader == nullptr)
     {
-      result = eIasRingBuffNotAllowed;
+      result = eIasRingBuffInvalidParam;
     }
     else
     {
-      mReadInProgress.exchange(true);
-      mMutexReadInProgress.lock();
-      *offset = mReadOffset;
+      fprintf(stderr, "beginAccess: ");
+      uint32_t bufferLevel = calculateReaderBufferLevel(reader);
+      *offset = reader->offset;
 
-      if (*numBuffers > mBufferLevel)
+      if (*numBuffers > bufferLevel)
       {
-        *numBuffers = mBufferLevel;
+        *numBuffers = bufferLevel;
       }
-      if ((mReadOffset + *numBuffers) >= mNumBuffers)
+      if ((*offset + *numBuffers) >= mNumBuffers)
       {
-        *numBuffers = mNumBuffers - mReadOffset;
+        *numBuffers = mNumBuffers - *offset;
       }
+
+      fprintf(stderr, "Begin Read access (%d). *numBuffers: %u *offset: %u reader->offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, reader->offset, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
     }
   }
   else // write access
@@ -150,14 +168,18 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
       {
         *numBuffers = mNumBuffers - mWriteOffset;
       }
+      if (mWriteOffset < mReadOffset)
+      {
+        *numBuffers = mReadOffset - mWriteOffset - 1;
+      }
+      fprintf(stderr, "Begin Write access (%d). *numBuffers: %u *offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
     }
   }
 
   return result;
 }
 
-
-IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess access, uint32_t offset, uint32_t numBuffers)
+IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess access, pid_t pid, uint32_t offset, uint32_t numBuffers)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
   (void)offset;
@@ -168,35 +190,32 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
   }
   else if (eIasRingBufferAccessRead == access)
   {
-    if (mReadInProgress)
+    if (static_cast<int32_t>(mBufferLevel - numBuffers) < 0)
     {
-      if (static_cast<int32_t>(mBufferLevel - numBuffers) < 0)
+      result = eIasRingBuffInvalidParam;
+      fprintf(stderr, "End access FAIL: mBufferLevel: %u numBuffers: %u offset: %u CalcBufLevel: %u\n", mBufferLevel, numBuffers, offset, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+    }
+    else
+    {
+      RingBufferReader *reader = findReader(pid);
+      if (reader == nullptr)
+      {
+        result = eIasRingBuffInvalidParam;
+      }
+      else if ((reader->offset + numBuffers) > mNumBuffers)
       {
         result = eIasRingBuffInvalidParam;
       }
       else
       {
-        IasLockGuard lock(&mMutex);
-        if ((mReadOffset + numBuffers) == mNumBuffers)
-        {
-          mReadOffset = 0;
-        }
-        else if ((mReadOffset + numBuffers) > mNumBuffers)
-        {
-          return eIasRingBuffInvalidParam;
-        }
-        else
-        {
-          mReadOffset += numBuffers;
-        }
-        mBufferLevel -= numBuffers;
+        reader->offset += numBuffers;
+        aggregateReaderOffset();
 
-        mReadInProgress.exchange(false);
-        mMutexReadInProgress.unlock();
         if (mBufferLevel <= mWriteWaitLevel)
         {
           mCondWrite.signal();
         }
+        fprintf(stderr, "End Read access(%d). numBuffers: %u offset: %u reader->offset: %u \n", pid, numBuffers, offset, reader->offset);
       }
     }
   }
@@ -229,6 +248,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
         mMutexWriteInProgress.unlock();
         if (mBufferLevel >= mReadWaitLevel)
         {
+          // TODO this should be a broadcast
           mCondRead.signal();
         }
       }
@@ -252,16 +272,19 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitWrite(uint32_t numBuffers
     IasLockGuard lock(&mMutex);
     mWriteWaitLevel = mNumBuffers - numBuffers;
     IasIntProcCondVar::IasResult cndres = IasIntProcCondVar::eIasOk;
-    if (mBufferLevel > mWriteWaitLevel)
+
+    while (mBufferLevel > mWriteWaitLevel)
     {
       cndres = mCondWrite.wait(mMutex, timeout_ms);
       if (cndres == IasIntProcCondVar::eIasTimeout)
       {
         result = eIasRingBuffTimeOut;
+        break;
       }
       else if (cndres != IasIntProcCondVar::eIasOk)
       {
         result = eIasRingBuffCondWaitFailed;
+        break;
       }
     }
   }
@@ -270,29 +293,39 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitWrite(uint32_t numBuffers
 }
 
 
-IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitRead(uint32_t numBuffers, uint32_t timeout_ms)
+IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitRead(pid_t pid, uint32_t numBuffers, uint32_t timeout_ms)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
+  RingBufferReader *reader = findReader(pid);
 
-  if ((numBuffers > mNumBuffers) || 0u == numBuffers || 0u == timeout_ms)
+  if ((numBuffers > mNumBuffers) || 0u == numBuffers || 0u == timeout_ms || reader == nullptr)
   {
     result = eIasRingBuffInvalidParam;
   }
   else
   {
     IasLockGuard lock(&mMutex);
-    mReadWaitLevel = numBuffers;
+
+    // mReadWaitLevel should have the smaller level for all readers
+    if (numBuffers < mReadWaitLevel)
+    {
+      mReadWaitLevel = numBuffers;
+    }
+
     IasIntProcCondVar::IasResult cndres = IasIntProcCondVar::eIasOk;
-    if (mBufferLevel < mReadWaitLevel)
+    fprintf(stderr, "waitRead: ");
+    while (calculateReaderBufferLevel(reader) < numBuffers)
     {
       cndres = mCondRead.wait(mMutex, timeout_ms);
       if (cndres == IasIntProcCondVar::eIasTimeout)
       {
         result = eIasRingBuffTimeOut;
+        break;
       }
       else if (cndres != IasIntProcCondVar::eIasOk)
       {
         result = eIasRingBuffCondWaitFailed;
+        break;
       }
     }
   }
@@ -331,6 +364,139 @@ void IasAvbVideoRingBufferShm::zeroOut()
   memset(getDataBuffer(), 0, sizeOfBufferInBytes);
   mMutexWriteInProgress.unlock();
   mMutexReadInProgress.unlock();
+}
+
+IasVideoRingBufferResult IasAvbVideoRingBufferShm::addReader(pid_t pid)
+{
+  IasVideoRingBufferResult result = eIasRingBuffTooManyReaders;
+
+  if (pid <= 0)
+  {
+    result = eIasRingBuffInvalidParam;
+  }
+  else
+  {
+    mMutexReaders.lock();
+    for (int i = 0; i < cIasVideoRingBufferShmMaxReaders; i++)
+    {
+      if (mReaders[i].pid == 0)
+      {
+        mReaders[i].pid = pid;
+        mReaders[i].offset = mReadOffset;
+        result = eIasRingBuffOk;
+        break;
+      }
+    }
+    mMutexReaders.unlock();
+  }
+
+  return result;
+}
+
+IasVideoRingBufferResult IasAvbVideoRingBufferShm::removeReader(pid_t pid)
+{
+  IasVideoRingBufferResult result = eIasRingBuffInvalidParam;
+
+  if (pid > 0)
+  {
+    mMutexReaders.lock();
+    for (int i = 0; i < cIasVideoRingBufferShmMaxReaders; i++)
+    {
+      if (mReaders[i].pid == pid)
+      {
+        mReaders[i].pid = 0;
+        mReaders[i].offset = 0;
+        result = eIasRingBuffOk;
+      }
+    }
+    mMutexReaders.unlock();
+  }
+
+  return result;
+}
+
+uint32_t IasAvbVideoRingBufferShm::updateSmallerReaderOffset()
+{
+  IasLockGuard lock(&mMutexReaders);
+  uint32_t smallerOffset = UINT32_MAX;
+
+  // First, find out until where the slower reader read
+  for (int i = 0; i < cIasVideoRingBufferShmMaxReaders; i++)
+  {
+    if (mReaders[i].pid != 0)
+    {
+      fprintf(stderr, "\t\tAGGREGATE: reader %d - offset %u\n", mReaders[i].pid, mReaders[i].offset);
+      if (mReaders[i].offset < smallerOffset)
+      {
+        smallerOffset = mReaders[i].offset;
+      }
+    }
+  }
+
+  if (smallerOffset == UINT32_MAX)
+  {
+    // No readers
+    return smallerOffset;
+  }
+
+  fprintf(stderr, "AGGREGATE: smallerOffset: %u mNumBuffers: %u mBufferLevel: %u CalcBufLevel: %u\n", smallerOffset, mNumBuffers, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+  // When all readers read everything, time to reset their offsets
+  if (smallerOffset == mNumBuffers)
+  {
+    for (int i = 0; i < cIasVideoRingBufferShmMaxReaders; i++)
+    {
+      if (mReaders[i].pid != 0)
+      {
+        mReaders[i].offset = 0;
+      }
+    }
+  }
+
+  return smallerOffset;
+}
+
+void IasAvbVideoRingBufferShm::aggregateReaderOffset()
+{
+  uint32_t smallerOffset = updateSmallerReaderOffset();
+
+  IasLockGuard lock(&mMutex);
+
+  // Fill level decreased by the difference between current offset and previous
+  mBufferLevel -= (smallerOffset - mReadOffset);
+
+  if (smallerOffset == mNumBuffers)
+  {
+    mReadOffset = 0;
+  }
+  else if (smallerOffset < mNumBuffers)
+  {
+    mReadOffset = smallerOffset;
+  }
+
+  fprintf(stderr, "\tAGGREGATE mBufferLevel: %u mReadOffset: %u mNumBuffers: %u [mWriteOffset: %u] CalcBufLevel: %u\n", mBufferLevel, mReadOffset, mNumBuffers, mWriteOffset, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+}
+
+uint32_t IasAvbVideoRingBufferShm::calculateReaderBufferLevel(RingBufferReader *reader)
+{
+    uint32_t bufferLevel;
+    // mBufferLevel has the overall buffer level, relative to the slowest reader.
+    // Other readers should have a smaller buffer level, or, a small number of
+    // buffers available to read
+    // TODO world would be a better place if `mNumBuffers` was a power of two. Can we enforce that?
+    // So the calculation would be simply:
+    // bufferLevel = (mWriteOffset - reader->offset) % mNumBuffers;
+
+    if (mWriteOffset >= reader->offset)
+    {
+      bufferLevel = mWriteOffset - reader->offset;
+    }
+    else
+    {
+      bufferLevel = mNumBuffers - reader->offset + mWriteOffset;
+    }
+
+    fprintf(stderr, "CALCULATEREADERBUFFERLEVEL. Buffer level for pid %d: %u\n", reader->pid, bufferLevel);
+    return bufferLevel;
 }
 
 } // namespace IasMediaTransportAvb
