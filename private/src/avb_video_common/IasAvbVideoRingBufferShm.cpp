@@ -25,6 +25,11 @@ namespace IasMediaTransportAvb {
 static const std::string cClassName = "IasAvbVideoRingBufferShm::";
 #define LOG_PREFIX cClassName + __func__ + "(" + std::to_string(__LINE__) + "):"
 
+#define NSEC_PER_SEC 1000000000
+
+// TODO this should be configurable
+#define READER_TIMEOUT_NS 2 * NSEC_PER_SEC
+
 IasAvbVideoRingBufferShm::IasAvbVideoRingBufferShm()
   : mBufferSize(0u)
   , mNumBuffers(0u)
@@ -145,6 +150,8 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
         *numBuffers = mNumBuffers - *offset;
       }
 
+      updateReaderAccess(reader);
+
       fprintf(stderr, "Begin Read access (%d). *numBuffers: %u *offset: %u reader->offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, reader->offset, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
     }
   }
@@ -221,6 +228,9 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
         {
           mCondWrite.broadcast();
         }
+
+        updateReaderAccess(reader);
+
         fprintf(stderr, "End Read access(%d). numBuffers: %u offset: %u reader->offset: %u \n", pid, numBuffers, offset, reader->offset);
       }
     }
@@ -256,6 +266,8 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
         {
           mCondRead.broadcast();
         }
+
+        purgeUnresponsiveReaders();
       }
     }
   }
@@ -318,10 +330,12 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitRead(pid_t pid, uint32_t 
     }
     mMutex.unlock();
 
+    updateReaderAccess(reader);
     IasAvbVideoCondVar::IasResult cndres = IasAvbVideoCondVar::eIasOk;
     while (calculateReaderBufferLevel(reader) < numBuffers)
     {
       cndres = mCondRead.wait(timeout_ms);
+      updateReaderAccess(reader);
       if (cndres == IasAvbVideoCondVar::eIasTimeout)
       {
         // Timeout happened, but if our predicate for ending wait is now true, just return OK
@@ -391,6 +405,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::addReader(pid_t pid)
       {
         mReaders[i].pid = pid;
         mReaders[i].offset = mReadOffset;
+        updateReaderAccess(&mReaders[i]);
         result = eIasRingBuffOk;
         break;
       }
@@ -414,6 +429,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::removeReader(pid_t pid)
       {
         mReaders[i].pid = 0;
         mReaders[i].offset = 0;
+        mReaders[i].lastAccess = 0;
         result = eIasRingBuffOk;
       }
     }
@@ -513,6 +529,39 @@ uint32_t IasAvbVideoRingBufferShm::calculateReaderBufferLevel(RingBufferReader *
 
     fprintf(stderr, "CALCULATEREADERBUFFERLEVEL. Buffer level for pid %d: %u\n", reader->pid, bufferLevel);
     return bufferLevel;
+}
+
+void IasAvbVideoRingBufferShm::updateReaderAccess(RingBufferReader *reader)
+{
+  struct timespec ts;
+
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+
+  reader->lastAccess = ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+}
+
+void IasAvbVideoRingBufferShm::purgeUnresponsiveReaders()
+{
+  struct timespec ts;
+  uint64_t now;
+
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  now = ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+
+  IasLockGuard readersLock(&mMutexReaders);
+  for (int i = 0; i < cIasVideoRingBufferShmMaxReaders; i++)
+  {
+    if (mReaders[i].pid != 0)
+    {
+      uint64_t lastAccess = mReaders[i].lastAccess;
+      if ((now > lastAccess) && ((now - lastAccess) > READER_TIMEOUT_NS)) {
+        fprintf(stderr, "Purging reader %d after %lu ns\n", mReaders[i].pid, (now - lastAccess));
+        mReaders[i].pid = 0;
+        mReaders[i].offset = 0;
+        mReaders[i].lastAccess = 0;
+      }
+    }
+  }
 }
 
 } // namespace IasMediaTransportAvb
