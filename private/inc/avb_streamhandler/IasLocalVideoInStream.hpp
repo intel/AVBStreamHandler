@@ -96,9 +96,11 @@ class IasLocalVideoInStream : public IasLocalVideoStream, public IasIRunnable
     /*!
      * @brief copys the data form/to shared memory .
      *
+     * @param[in]  packet  thread-id of current thread
+     *
      * @returns  eIasAvbProcOK on success, otherwise an error code.
      */
-    IasAvbProcessingResult copyJob();
+    IasAvbProcessingResult copyJob(pid_t tid);
 
     /*!
      * @brief Returns whether the instance is initialized or not.

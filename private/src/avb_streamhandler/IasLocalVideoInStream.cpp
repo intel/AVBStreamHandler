@@ -22,6 +22,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include <sys/syscall.h>
 
 namespace IasMediaTransportAvb {
 
@@ -235,18 +236,22 @@ IasResult IasLocalVideoInStream::run()
   IasResult result = IasResult::cOk;
   DLT_LOG_CXX(*mLog, DLT_LOG_VERBOSE, LOG_PREFIX);
 
+  pid_t tid = (pid_t)syscall(SYS_gettid);
+
+  mRingBuffer->addReader(tid);
   while (mThreadIsRunning)
   {
-    IasVideoRingBufferResult res = mRingBuffer->waitRead(1, mTimeout);
+    IasVideoRingBufferResult res = mRingBuffer->waitRead(tid, 1, mTimeout);
     if (res != eIasRingBuffTimeOut)
     {
-      (void) copyJob();
+      (void) copyJob(tid);
     }
     else
     {
       DLT_LOG_CXX(*mLog, DLT_LOG_VERBOSE, LOG_PREFIX, "Timeout while waiting for data");
     }
   }
+  mRingBuffer->removeReader(tid);
 
   return result;
 }
@@ -266,7 +271,7 @@ IasResult IasLocalVideoInStream::afterRun()
 }
 
 
-IasAvbProcessingResult IasLocalVideoInStream::copyJob()
+IasAvbProcessingResult IasLocalVideoInStream::copyJob(pid_t tid)
 {
   IasAvbProcessingResult result = eIasAvbProcOK;
 
@@ -279,10 +284,10 @@ IasAvbProcessingResult IasLocalVideoInStream::copyJob()
     uint32_t numPacketsTransferred = 0u;
 
     IasVideoRingBufferResult res;
-    if (eIasRingBuffOk != (res = mRingBuffer->beginAccess(eIasRingBufferAccessRead, &basePtr, &offset, &numPackets)))
+    if (eIasRingBuffOk != (res = mRingBuffer->beginAccess(eIasRingBufferAccessRead, tid, &basePtr, &offset, &numPackets)))
     {
       DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Can't acquire buffer for access!");
-      res = mRingBuffer->endAccess(eIasRingBufferAccessRead, 0, 0);
+      res = mRingBuffer->endAccess(eIasRingBufferAccessRead, tid, 0, 0);
       AVB_ASSERT(result == eIasRingBuffOk);
       (void)res;
       result = eIasAvbProcErr;
@@ -316,7 +321,7 @@ IasAvbProcessingResult IasLocalVideoInStream::copyJob()
 
       numPacketsTransferred++;
 
-      res = mRingBuffer->endAccess(eIasRingBufferAccessRead, offset, numPacketsTransferred);
+      res = mRingBuffer->endAccess(eIasRingBufferAccessRead, tid, offset, numPacketsTransferred);
       AVB_ASSERT(result == eIasRingBuffOk);
     }
   }

@@ -28,6 +28,7 @@ enum IasVideoRingBufferResult
   eIasRingBuffTimeOut,            //!< timeout exceeded
   eIasRingBuffProbeError,         //!< Probe error
   eIasRingBuffCondWaitFailed,     //!< Cond wait failed
+  eIasRingBuffTooManyReaders,     //!< Maximum readers limit exceeded
 };
 
 }

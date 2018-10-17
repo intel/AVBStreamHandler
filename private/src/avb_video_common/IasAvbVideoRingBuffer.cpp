@@ -98,7 +98,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::setup(IasAvbVideoRingBufferShm* 
 }
 
 
-IasVideoRingBufferResult IasAvbVideoRingBuffer::updateAvailable(IasRingBufferAccess access, uint32_t* numBuffers)
+IasVideoRingBufferResult IasAvbVideoRingBuffer::updateAvailable(IasRingBufferAccess access, pid_t pid, uint32_t* numBuffers)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
 
@@ -112,7 +112,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::updateAvailable(IasRingBufferAcc
   }
   else if (mIsShm)
   {
-    result = mRingBufShm->updateAvailable(access, numBuffers);
+    result = mRingBufShm->updateAvailable(access, pid, numBuffers);
   }
   else
   {
@@ -123,7 +123,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::updateAvailable(IasRingBufferAcc
 }
 
 
-IasVideoRingBufferResult IasAvbVideoRingBuffer::beginAccess(IasRingBufferAccess access, void **dataPtr, uint32_t* offset, uint32_t* numBuffers)
+IasVideoRingBufferResult IasAvbVideoRingBuffer::beginAccess(IasRingBufferAccess access, pid_t pid, void **dataPtr, uint32_t* offset, uint32_t* numBuffers)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
 
@@ -138,7 +138,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::beginAccess(IasRingBufferAccess 
   else if (mIsShm)
   {
     *dataPtr = mDataPtr;
-    result = mRingBufShm->beginAccess(access, offset, numBuffers);
+    result = mRingBufShm->beginAccess(access, pid, offset, numBuffers);
   }
   else
   {
@@ -149,7 +149,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::beginAccess(IasRingBufferAccess 
 }
 
 
-IasVideoRingBufferResult IasAvbVideoRingBuffer::endAccess(IasRingBufferAccess access, uint32_t offset, uint32_t numBuffers)
+IasVideoRingBufferResult IasAvbVideoRingBuffer::endAccess(IasRingBufferAccess access, pid_t pid, uint32_t offset, uint32_t numBuffers)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
 
@@ -163,7 +163,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::endAccess(IasRingBufferAccess ac
   }
   else if (mIsShm)
   {
-    result = mRingBufShm->endAccess(access, offset, numBuffers);
+    result = mRingBufShm->endAccess(access, pid, offset, numBuffers);
   }
   else
   {
@@ -174,7 +174,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::endAccess(IasRingBufferAccess ac
 }
 
 
-IasVideoRingBufferResult IasAvbVideoRingBuffer::waitRead(uint32_t numBuffers, uint32_t timeout_ms)
+IasVideoRingBufferResult IasAvbVideoRingBuffer::waitRead(pid_t pid, uint32_t numBuffers, uint32_t timeout_ms)
 {
   IasVideoRingBufferResult result = eIasRingBuffOk;
 
@@ -184,7 +184,7 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::waitRead(uint32_t numBuffers, ui
   }
   else if (mIsShm)
   {
-    result = mRingBufShm->waitRead(numBuffers, timeout_ms);
+    result = mRingBufShm->waitRead(pid, numBuffers, timeout_ms);
   }
   else
   {
@@ -318,6 +318,34 @@ void IasAvbVideoRingBuffer::zeroOut()
   {
     mRingBufShm->zeroOut();
   }
+}
+
+IasVideoRingBufferResult IasAvbVideoRingBuffer::addReader(pid_t pid)
+{
+  if (nullptr == mRingBufShm)
+  {
+    AVB_ASSERT(false);
+  }
+  else if (mIsShm)
+  {
+    return mRingBufShm->addReader(pid);
+  }
+
+  return eIasRingBuffNotAllowed;
+}
+
+IasVideoRingBufferResult IasAvbVideoRingBuffer::removeReader(pid_t pid)
+{
+  if (nullptr == mRingBufShm)
+  {
+    AVB_ASSERT(false);
+  }
+  else if (mIsShm)
+  {
+    return mRingBufShm->removeReader(pid);
+  }
+
+  return eIasRingBuffNotAllowed;
 }
 
 } // namespace IasMediaTransportAvb

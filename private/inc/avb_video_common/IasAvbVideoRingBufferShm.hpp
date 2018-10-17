@@ -31,6 +31,7 @@ using IasAudio::IasIntProcCondVar;
 
 namespace IasMediaTransportAvb {
 
+static const uint16_t cIasVideoRingBufferShmMaxReaders = 32;
 
 class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
 {
@@ -69,11 +70,12 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      * entries to be written.
      *
      * @param[in]  access      Specifies the access type (either eIasRingBufferAccessRead or eIasRingBufferAccessWrite).
+     * @param[in]  pid         Caller pid. Must match a previous registered pid for read access. Ignored for write access.
      * @param[out] numBuffers  Returned number of buffers (packets) that are ready to be processed.
      *
      * @returns                eIasRingBuffOk on success, otherwise an error code.
      */
-    IasVideoRingBufferResult updateAvailable(IasRingBufferAccess access, uint32_t *numBuffers);
+    IasVideoRingBufferResult updateAvailable(IasRingBufferAccess access, pid_t pid, uint32_t *numBuffers);
 
     /*!
      * @brief Request to access the video ring buffer
@@ -84,13 +86,14 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      * buffer is full (playback) or empty (capture).
      *
      * @param[in]     access  Specifies the access type (either eIasRingBufferAccessRead or eIasRingBufferAccessWrite).
+     * @param[in]     pid     Caller pid. Must match a previous registered pid for read access. Ignored for write access.
      * @param[out]    dataPtr Returned mmap'ed base pointer to the data packets.
      * @param[out]    offset  Returned mmap offset in buffers (== packets).
      * @param[in,out] numBuffers  mmap area portion size in buffers (wanted on entry, contiguous available on exit).
      *
      * @returns                eIasRingBuffOk on success, otherwise an error code.
      */
-    IasVideoRingBufferResult beginAccess(IasRingBufferAccess access, uint32_t* offset, uint32_t* numBuffers);
+    IasVideoRingBufferResult beginAccess(IasRingBufferAccess access, pid_t pid, uint32_t* offset, uint32_t* numBuffers);
 
     /*!
      * @brief Declare that accessing a portion of an mmap'ed area has finished.
@@ -104,13 +107,14 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      * IasAvbVideoRingBuffer::endAccess().
      *
      * @param[in] access  Specifies the access type (either eIasRingBufferAccessRead or eIasRingBufferAccessWrite).
+     * @param[in] pid     Caller pid. Must match a previous registered pid for read access. Ignored for write access.
      * @param[in] offset  Offset in buffers (== packets), must be equal to the offset value that
      *                    IasAvbVideoRingBuffer::beginAccess() returned.
      * @param[in] numBuffers  mmap area portion size in buffers (== number of packets that have been processed)
      *
      * @returns           eIasRingBuffOk on success, otherwise an error code.
      */
-    IasVideoRingBufferResult endAccess(IasRingBufferAccess access, uint32_t offset, uint32_t numBuffers);
+    IasVideoRingBufferResult endAccess(IasRingBufferAccess access, pid_t pid, uint32_t offset, uint32_t numBuffers);
 
     /*!
      * @brief function to retrieve the data pointer.
@@ -137,12 +141,13 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      * @brief function to read from ring buffer (with timeout) when a desired buffer level is reached.
      *        the function either returns when a timeout occurs or when the level is reached.
      *
+     * @param[in] pid         Caller pid. Must match a previous registered pid for read access.
      * @param[in] numBuffers  the desired buffer level, must be > 0 and >= total number of buffers
      * @param[in] timeout_ms  timeout in ms, function will return if buffer level is not reached within timeout, must be > 0
      *
      * @returns               eIasRingBuffOk on success, otherwise an error code.
      */
-    IasVideoRingBufferResult waitRead(uint32_t numBuffers, uint32_t timeout_ms);
+    IasVideoRingBufferResult waitRead(pid_t pid, uint32_t numBuffers, uint32_t timeout_ms);
 
     /*!
      * @brief function to write to ring buffer (with timeout) when a desired buffer level is reached.
@@ -196,7 +201,39 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      */
     void zeroOut();
 
+    /*!
+     * @brief Register a reader on the ringbuffer.
+     *
+     * As it's possible to have multiple readers reading a ringbuffer, it is necessary some
+     * coordination among them and the - single - writer. By registering a reader with the
+     * ringbuffer, ringbuffer becomes aware of that new reader, and can keep proper track of it.
+     * The id used here is expected on future beginAccess, endAccess and waitRead calls.
+     *
+     * @param[in] pid  An id for the reader - usually the thread id or process id for single thread readers.
+     *
+     * @returns        eIasRingBuffOk on success, otherwise an error code.
+     */
+    IasVideoRingBufferResult addReader(pid_t pid);
+
+    /*!
+     * @brief Unregister a reader on the ringbuffer.
+     *
+     * After this call, future beginAccess, endAccess and waitRead calls will fail with
+     * eIasRingBuffInvalidParam.
+     *
+     * @param[in] pid  Previously registered reader id.
+     *
+     * @returns        eIasRingBuffOk on success, otherwise an error code.
+     */
+    IasVideoRingBufferResult removeReader(pid_t pid);
+
   private:
+
+    /* Struct to keep track of reader register to read on this RingBuffer */
+    struct RingBufferReader {
+        pid_t pid;
+        uint32_t offset;
+    };
 
     /*!
      * @brief Copy constructor, private unimplemented to prevent misuse.
@@ -208,6 +245,54 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      */
     IasAvbVideoRingBufferShm& operator=(IasAvbVideoRingBufferShm const &other);
 
+    /*!
+     * @brief Get smaller reader offset and resets readers offset when due
+     *
+     * Walks readers list and get which one has the smallest offset - or, the
+     * offset of the slowest reader. Also, if all readers are at the end of
+     * the buffer, resets their offsets, so they can start reading from the
+     * beginning again.
+     *
+     * @returns        smallest offset of all readers, or UINT32_MAX if no readers are registered.
+     */
+    uint32_t updateSmallerReaderOffset();
+
+    /*!
+     * @brief updates mReadOffset with smallest offset among readers
+     *
+     * This helps ringbuffer to keep track of what packets weren't read yet.
+     */
+    void aggregateReaderOffset();
+
+    /*!
+     * @brief Get individual reader buffer level
+     *
+     * As some readers may be faster than others, the buffer level (i.e., how many packets
+     * were not read) will vary from reader to reader. This method calculates the right
+     * buffer level for any reader.
+     *
+     * @returns     reader buffer level.
+     */
+    uint32_t calculateReaderBufferLevel(RingBufferReader *reader);
+
+    /*!
+     * @brief Returns a RingBufferReader entry for a reader, given its id
+     *
+     * @returns     reader or nullptr if no reader with given id was found.
+     */
+    RingBufferReader *findReader(pid_t pid) {
+      if (pid > 0)
+      {
+        for (int i = 0; i < cIasVideoRingBufferShmMaxReaders; i++)
+        {
+          if (mReaders[i].pid == pid)
+          {
+            return &mReaders[i];
+          }
+        }
+      }
+      return nullptr;
+    };
 
     //
     // Member variables
@@ -230,6 +315,9 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
     IasIntProcCondVar                     mCondWrite;            //!< conditional variable for write access
     uint32_t                              mReadWaitLevel;        //!< buffer level that must be reached before a signal is sent
     uint32_t                              mWriteWaitLevel;       //!< buffer level that must be reached before a signal is sent
+
+    IasIntProcMutex                       mMutexReaders;                              //!< Protects access to mReaders array
+    RingBufferReader                      mReaders[cIasVideoRingBufferShmMaxReaders]; //!< List of active readers
 };
 
 } // namespace IasMediaTransportAvb
