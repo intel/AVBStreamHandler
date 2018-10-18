@@ -17,6 +17,7 @@
 #define IAS_MEDIATRANSPORT_VIDEOCOMMON_AVBVIDEORINGBUFFERSHM_HPP
 
 
+#include "avb_video_common/IasAvbVideoCondVar.hpp"
 #include "avb_video_common/IasAvbVideoCommonTypes.hpp"
 #include "avb_video_common/IasAvbVideoRingBufferResult.hpp"
 #include "internal/audio/common/IasIntProcCondVar.hpp"
@@ -311,8 +312,8 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
     IasIntProcMutex                       mMutex;                //!< used to lock critical sections
     IasIntProcMutex                       mMutexReadInProgress;  //!< to avoid that reset is executed while reading from buffer
     IasIntProcMutex                       mMutexWriteInProgress; //!< to avoid that reset is executed while writing into buffer
-    IasIntProcCondVar                     mCondRead;             //!< conditional variable for read access
-    IasIntProcCondVar                     mCondWrite;            //!< conditional variable for write access
+    IasAvbVideoCondVar                    mCondRead;             //!< conditional variable for read access
+    IasAvbVideoCondVar                    mCondWrite;            //!< conditional variable for write access
     uint32_t                              mReadWaitLevel;        //!< buffer level that must be reached before a signal is sent
     uint32_t                              mWriteWaitLevel;       //!< buffer level that must be reached before a signal is sent
 
