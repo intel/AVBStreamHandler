@@ -44,6 +44,7 @@ add_library( ias-media_transport-avb_streamhandler SHARED
     private/src/avb_streamhandler/IasDiaLogger.cpp
     private/src/avb_streamhandler/IasAvbDiagnosticPacket.cpp
     private/src/avb_streamhandler/IasLocalAudioBufferDesc.cpp
+    private/src/avb_video_common/IasAvbVideoCondVar.cpp
     private/src/avb_video_common/IasAvbVideoShmConnection.cpp
     private/src/avb_video_common/IasAvbVideoRingBuffer.cpp
     private/src/avb_video_common/IasAvbVideoRingBufferFactory.cpp
