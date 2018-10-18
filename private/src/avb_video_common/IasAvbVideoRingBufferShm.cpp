@@ -159,10 +159,16 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
       mWriteInProgress.exchange(true);
       mMutexWriteInProgress.lock();
       *offset = mWriteOffset;
+      /* mBufferLevel could be changed by any reader process. Loading locally
+       * avoid issues caused by its value changing during this function.
+       * Using an "old" mBufferLevel should not be a problem, as readers processes
+       * will only make it smaller - so we could miss writing some packets now,
+       * but that's not a problem. */
+      uint32_t bufferLevel = mBufferLevel;
 
-      if ((*numBuffers) > (mNumBuffers - mBufferLevel))
+      if ((*numBuffers) > (mNumBuffers - bufferLevel))
       {
-        *numBuffers = mNumBuffers - mBufferLevel;
+        *numBuffers = mNumBuffers - bufferLevel;
       }
       if ((mWriteOffset + *numBuffers) >= mNumBuffers)
       {
@@ -172,7 +178,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
       {
         *numBuffers = mReadOffset - mWriteOffset - 1;
       }
-      fprintf(stderr, "Begin Write access (%d). *numBuffers: %u *offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+      fprintf(stderr, "Begin Write access (%d). *numBuffers: %u *offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, bufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
     }
   }
 
@@ -213,7 +219,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
 
         if (mBufferLevel <= mWriteWaitLevel)
         {
-          mCondWrite.signal();
+          mCondWrite.broadcast();
         }
         fprintf(stderr, "End Read access(%d). numBuffers: %u offset: %u reader->offset: %u \n", pid, numBuffers, offset, reader->offset);
       }
@@ -248,8 +254,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
         mMutexWriteInProgress.unlock();
         if (mBufferLevel >= mReadWaitLevel)
         {
-          // TODO this should be a broadcast
-          mCondRead.signal();
+          mCondRead.broadcast();
         }
       }
     }
@@ -269,19 +274,19 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitWrite(uint32_t numBuffers
   }
   else
   {
-    IasLockGuard lock(&mMutex);
     mWriteWaitLevel = mNumBuffers - numBuffers;
-    IasIntProcCondVar::IasResult cndres = IasIntProcCondVar::eIasOk;
+    IasAvbVideoCondVar::IasResult cndres = IasAvbVideoCondVar::eIasOk;
 
     while (mBufferLevel > mWriteWaitLevel)
     {
-      cndres = mCondWrite.wait(mMutex, timeout_ms);
-      if (cndres == IasIntProcCondVar::eIasTimeout)
+      cndres = mCondWrite.wait(timeout_ms);
+      if (cndres == IasAvbVideoCondVar::eIasTimeout)
       {
-        result = eIasRingBuffTimeOut;
+        // Timeout happened, but if our predicate for ending wait is now true, just return OK
+        result = mBufferLevel > mWriteWaitLevel ? eIasRingBuffTimeOut : eIasRingBuffOk;
         break;
       }
-      else if (cndres != IasIntProcCondVar::eIasOk)
+      else if (cndres != IasAvbVideoCondVar::eIasOk)
       {
         result = eIasRingBuffCondWaitFailed;
         break;
@@ -304,25 +309,26 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitRead(pid_t pid, uint32_t 
   }
   else
   {
-    IasLockGuard lock(&mMutex);
-
     // mReadWaitLevel should have the smaller level for all readers
+    /* mMutex protects mReadWaitLevel from being (mis)updated by other readers */
+    mMutex.lock();
     if (numBuffers < mReadWaitLevel)
     {
       mReadWaitLevel = numBuffers;
     }
+    mMutex.unlock();
 
-    IasIntProcCondVar::IasResult cndres = IasIntProcCondVar::eIasOk;
-    fprintf(stderr, "waitRead: ");
+    IasAvbVideoCondVar::IasResult cndres = IasAvbVideoCondVar::eIasOk;
     while (calculateReaderBufferLevel(reader) < numBuffers)
     {
-      cndres = mCondRead.wait(mMutex, timeout_ms);
-      if (cndres == IasIntProcCondVar::eIasTimeout)
+      cndres = mCondRead.wait(timeout_ms);
+      if (cndres == IasAvbVideoCondVar::eIasTimeout)
       {
-        result = eIasRingBuffTimeOut;
+        // Timeout happened, but if our predicate for ending wait is now true, just return OK
+        result = calculateReaderBufferLevel(reader) < numBuffers ? eIasRingBuffTimeOut : eIasRingBuffOk;
         break;
       }
-      else if (cndres != IasIntProcCondVar::eIasOk)
+      else if (cndres != IasAvbVideoCondVar::eIasOk)
       {
         result = eIasRingBuffCondWaitFailed;
         break;
@@ -336,6 +342,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitRead(pid_t pid, uint32_t 
 
 void IasAvbVideoRingBufferShm::resetFromWriter()
 {
+/* XXX another mutex should be taken for this, as currently readers are mostly lock-free - or send all readers to wait */
   mMutexReadInProgress.lock();
   mReadOffset  = 0;
   mWriteOffset = 0;
@@ -343,7 +350,7 @@ void IasAvbVideoRingBufferShm::resetFromWriter()
   mMutexReadInProgress.unlock();
 }
 
-
+/* XXX this doesn't make much sense when having multiple readers */
 void IasAvbVideoRingBufferShm::resetFromReader()
 {
   mMutexWriteInProgress.lock();
@@ -357,6 +364,7 @@ void IasAvbVideoRingBufferShm::resetFromReader()
 void IasAvbVideoRingBufferShm::zeroOut()
 {
   // Lock both mutexes, to ensure nobody is accessing the buffer right now
+  /* XXX as reading is lock free, this needs a new approach, like sending all readers to wait */
   mMutexReadInProgress.lock();
   mMutexWriteInProgress.lock();
   uint32_t sizeOfBufferInBytes = mNumBuffers * mBufferSize;
@@ -478,21 +486,29 @@ void IasAvbVideoRingBufferShm::aggregateReaderOffset()
 
 uint32_t IasAvbVideoRingBufferShm::calculateReaderBufferLevel(RingBufferReader *reader)
 {
-    uint32_t bufferLevel;
     // mBufferLevel has the overall buffer level, relative to the slowest reader.
     // Other readers should have a smaller buffer level, or, a small number of
     // buffers available to read
     // TODO world would be a better place if `mNumBuffers` was a power of two. Can we enforce that?
     // So the calculation would be simply:
     // bufferLevel = (mWriteOffset - reader->offset) % mNumBuffers;
+    uint32_t bufferLevel;
 
-    if (mWriteOffset >= reader->offset)
+    /* mWriteOffset could be changed by writter process. Loading locally avoid
+     * issues caused by its value changing during this function. Using an "old"
+     * mWriteOffset is not an issue, as it only grows - so, we could miss
+     * reading some packets now, but that's not a problem. The case when
+     * mWriteOffset goes back to zero is because it reached end of ringbuffer
+     * - again, not a problem, as we'll eventually catch up */
+    uint32_t writeOffset = mWriteOffset;
+
+    if (writeOffset >= reader->offset)
     {
-      bufferLevel = mWriteOffset - reader->offset;
+      bufferLevel = writeOffset - reader->offset;
     }
     else
     {
-      bufferLevel = mNumBuffers - reader->offset + mWriteOffset;
+      bufferLevel = mNumBuffers - reader->offset + writeOffset;
     }
 
     fprintf(stderr, "CALCULATEREADERBUFFERLEVEL. Buffer level for pid %d: %u\n", reader->pid, bufferLevel);
