@@ -217,3 +217,42 @@ $ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -r
 
 Output should contain messages about sending (or receiving) packets with
 success.
+
+### Running the Systemd Watchdog
+
+AVB streamhandler watchdog is built as a static library. Currently, 3
+AVB streamhandler threads - Transmit sequencer, Alsa Worker and Receive
+engine,  register themselves with the watchdog manager. These can be
+enabled by passing "-k watchdog.enable=1" to avb_streamhandler_demo.
+
+Since we're relying on Systemd watchdog to reset AVB streamhandler
+if any of the three threads stop resetting the watchdog timer,the
+AVB streamhandler needs to be run as a Systemd service. A sample
+Systemd service file is described below.
+
+* Systemd service file. Place this at /etc/systemd/system/avb.service
+```
+[Unit]
+Description=AVBSH for watchdog testing
+
+[Service]
+Type=simple
+Environment="LD_LIBRARY_PATH=$AVB_DEPS/lib/"
+ExecStart=<path to your AVB SH build dir>/avb_streamhandler_demo -c -v -s
+pluginias-media_transport-avb_configuration_reference.so setup --target
+GrMrb -p MRB_Slave_Audio -n enp4s0 -k watchdog.enable=1
+WatchdogSec=30
+Restart=always
+```
+
+* Start/stop or check the status of the AVB streamhandler service with:
+```
+ - sudo systemctl start avb.service
+ - sudo systemctl status avb.service
+ - sudo systemctl stop avb.service
+```
+
+* To view watchdog specific logs:
+```
+ - sudo journalctl -fu avb.service | grep watchdog
+```
