@@ -126,7 +126,7 @@ $ sudo chmod 660 /dev/igb_avb
 $ sudo chgrp ias_avb /dev/igb_avb
 $ sudo chmod 660 /dev/ptp*
 $ sudo chgrp ias_avb /dev/ptp*
-
+$ sudo chgrp ias_avb /dev/shm/igb_sem
 # Start the DLT daemon (for logging and tracing) #
 
 $ cd $AVB_DEPS/bin
