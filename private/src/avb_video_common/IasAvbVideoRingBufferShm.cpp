@@ -356,41 +356,6 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::waitRead(pid_t pid, uint32_t 
   return result;
 }
 
-
-void IasAvbVideoRingBufferShm::resetFromWriter()
-{
-/* XXX another mutex should be taken for this, as currently readers are mostly lock-free - or send all readers to wait */
-  mMutexReadInProgress.lock();
-  mReadOffset  = 0;
-  mWriteOffset = 0;
-  mBufferLevel = 0;
-  mMutexReadInProgress.unlock();
-}
-
-/* XXX this doesn't make much sense when having multiple readers */
-void IasAvbVideoRingBufferShm::resetFromReader()
-{
-  mMutexWriteInProgress.lock();
-  mReadOffset  = 0;
-  mWriteOffset = 0;
-  mBufferLevel = 0;
-  mMutexWriteInProgress.unlock();
-}
-
-
-void IasAvbVideoRingBufferShm::zeroOut()
-{
-  // Lock both mutexes, to ensure nobody is accessing the buffer right now
-  /* XXX as reading is lock free, this needs a new approach, like sending all readers to wait */
-  mMutexReadInProgress.lock();
-  mMutexWriteInProgress.lock();
-  uint32_t sizeOfBufferInBytes = mNumBuffers * mBufferSize;
-  AVB_ASSERT(nullptr != getDataBuffer());
-  memset(getDataBuffer(), 0, sizeOfBufferInBytes);
-  mMutexWriteInProgress.unlock();
-  mMutexReadInProgress.unlock();
-}
-
 IasVideoRingBufferResult IasAvbVideoRingBufferShm::addReader(pid_t pid)
 {
   IasVideoRingBufferResult result = eIasRingBuffTooManyReaders;
