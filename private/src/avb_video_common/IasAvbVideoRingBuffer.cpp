@@ -281,45 +281,6 @@ uint32_t IasAvbVideoRingBuffer::getBufferSize() const
   return result;
 }
 
-
-void IasAvbVideoRingBuffer::resetFromWriter()
-{
-  if (nullptr == mRingBufShm)
-  {
-    AVB_ASSERT(false);
-  }
-  else if (mIsShm)
-  {
-    mRingBufShm->resetFromWriter();
-  }
-}
-
-
-void IasAvbVideoRingBuffer::resetFromReader()
-{
-  if (nullptr == mRingBufShm)
-  {
-    AVB_ASSERT(false);
-  }
-  else if (mIsShm)
-  {
-    mRingBufShm->resetFromReader();
-  }
-}
-
-
-void IasAvbVideoRingBuffer::zeroOut()
-{
-  if (nullptr == mRingBufShm)
-  {
-    AVB_ASSERT(false);
-  }
-  else if (mIsShm)
-  {
-    mRingBufShm->zeroOut();
-  }
-}
-
 IasVideoRingBufferResult IasAvbVideoRingBuffer::addReader(pid_t pid)
 {
   if (nullptr == mRingBufShm)

@@ -185,24 +185,6 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBuffer
     uint32_t getBufferSize() const;
 
     /*!
-     * @brief Reset the readOffset and the writeOffset to zero, so that the ring buffer appears to be empty.
-     *
-     * The function is intended to be called by the writer thread, while there is no write access in progress.
-     * The function applies a mutex, so that the readOffset is not modified while the reader thread reads
-     * from the buffer.
-     */
-    void resetFromWriter();
-
-    /*!
-     * @brief Reset the readOffset and the writeOffset to zero, so that the ring buffer will be empty again.
-     *
-     * The function is intended to be called by the reader thread, while there is no read access in progress.
-     * The function applies a mutex, so that the writeOffset is not modified while the writer thread writes
-     * into the buffer.
-     */
-    void resetFromReader();
-
-    /*!
      * @brief Set the name of the ring buffer.
      *
      * This function is called by the buffer factory to give the ring buffer a name.
@@ -217,17 +199,6 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBuffer
      * @returns The name of the ring buffer
      */
     const std::string& getName() const { return mName; }
-
-    /*!
-     * @brief Overwrite current content with zeros
-     *
-     * This method overwrites the current content of the ring buffer with zeros.
-     * Note: It does NOT change the read or writer pointer or the buffer fill level, it only zeros out
-     * the content. This can be used in error situations, when a buffer is completely filled and we
-     * are not able to insert another packet. It would lead to playback of old vidoe frames when sometimes later
-     * the client tries to read out samples from the buffer.
-     */
-    void zeroOut();
 
     /*!
      * @brief Register a reader on the ringbuffer.
