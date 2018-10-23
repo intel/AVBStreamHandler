@@ -1,0 +1,22 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+find_package( PkgConfig )
+pkg_check_modules( GST_VIDEO gstreamer-video-1.0 )
+
+if (${GST_VIDEO_FOUND})
+
+    add_library( ias-media_transport-gst_avb_video_plugin SHARED
+        private/src/gst/gstavbplugin.cpp
+        private/src/gst/gstavbclock.cpp
+        private/src/gst/gstavbvideosink.cpp
+        private/src/gst/gstavbvideosrc.cpp
+    )
+
+    target_link_libraries( ias-media_transport-gst_avb_video_plugin ${GST_VIDEO_LDFLAGS} ias-media_transport-avb_video_bridge)
+    target_compile_options ( ias-media_transport-gst_avb_video_plugin PUBLIC -fPIC ${GST_VIDEO_CFLAGS_OTHER})
+    target_include_directories( ias-media_transport-gst_avb_video_plugin PUBLIC ${GST_VIDEO_INCLUDE_DIRS})
+
+endif()
