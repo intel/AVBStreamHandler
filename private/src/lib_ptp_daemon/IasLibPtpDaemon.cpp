@@ -895,7 +895,7 @@ uint64_t IasLibPtpDaemon::getRealLocalTime(const bool force)
            * Basically we should not update time values here if the calculated rate ratio is not reliable.
            * But to keep the default behavior without setting the '-k clockdomain.raw.deviation.unlock'
            * same as the former code as much as possible, we update time values here by default to avoid
-           * causing regressions to a certain customer who has started evaluation with the former code.
+           * causing regressions to a certain user who has started evaluation with the former code.
            */
           mLastLocalTimeforRaw = localTimeForRaw;
           mLastRaw = raw1;

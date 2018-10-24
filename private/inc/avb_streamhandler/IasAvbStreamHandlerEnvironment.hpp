@@ -35,7 +35,7 @@ class IasDiaLogger;
  * @brief internal registry keys
  *
  * These are not part of the registry interface, since this interface is public
- * and we don't want to disclose all possible keys to the customer.
+ * and we don't want to disclose all possible keys to the user.
  * ATTENTION: all characters in -k Sting must be in lower case!
  */
 namespace IasRegKeys {
