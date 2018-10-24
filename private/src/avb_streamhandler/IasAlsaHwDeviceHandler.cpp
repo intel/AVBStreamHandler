@@ -234,10 +234,17 @@ IasAvbProcessingResult IasAlsaHwDeviceHandler::init(uint16_t numChannels, uint32
        if (eIasAvbProcOK == ret)
        {
          IasLibPtpDaemon* mPtpProxy = IasAvbStreamHandlerEnvironment::getPtpProxy();
-         mOptimalFillLevel = optimalFillLevel;
-         mAlsaDeviceType   = alsaDeviceType;
-         mLastPtpEpoch     = mPtpProxy->getEpochCounter();
-         IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cAudioTstampBuffer, mDescMode);
+         if (mPtpProxy)
+         {
+           mOptimalFillLevel = optimalFillLevel;
+           mAlsaDeviceType   = alsaDeviceType;
+           mLastPtpEpoch     = mPtpProxy->getEpochCounter();
+           IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cAudioTstampBuffer, mDescMode);
+         }
+         else
+         {
+           ret = eIasAvbProcInitializationFailed;
+         }
        }
        else
        {
