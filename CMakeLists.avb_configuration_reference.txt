@@ -20,3 +20,5 @@ set_target_properties(ias-media_transport-avb_configuration_reference PROPERTIES
 if (${IAS_IS_HOST_BUILD})
   target_compile_options(ias-media_transport-avb_config_base PUBLIC -DIAS_HOST_BUILD=1)
 endif()
+
+install(TARGETS ias-media_transport-avb_configuration_reference DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -28,3 +28,8 @@ if (${IAS_IS_HOST_BUILD})
       COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh $<TARGET_FILE:avb_streamhandler_demo>
   )
 endif()
+
+install(TARGETS avb_streamhandler_demo DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh ${CMAKE_INSTALL_PREFIX}/bin/avb_streamhandler_demo)")
+
+
