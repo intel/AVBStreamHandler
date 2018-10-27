@@ -89,3 +89,5 @@ set_target_properties( ias-media_transport-avb_streamhandler PROPERTIES VERSION 
 target_link_libraries( ias-media_transport-avb_streamhandler ias-audio-common )
 target_link_libraries( ias-media_transport-avb_streamhandler ias-media_transport-lib_ptp_daemon )
 target_link_libraries( ias-media_transport-avb_streamhandler ias-media_transport-avb_helper )
+
+install(TARGETS ias-media_transport-avb_streamhandler DESTINATION ${CMAKE_INSTALL_LIBDIR})

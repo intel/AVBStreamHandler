@@ -73,7 +73,7 @@ endif()
 #------------------------------------------------------------------
 # avb_streamhandler main CMakeLists
 #------------------------------------------------------------------
-
+include(GNUInstallDirs)
 include( CMakeLists.lib_ptp_daemon.txt )
 include( CMakeLists.avb_helper.txt )
 include( CMakeLists.avb_streamhandler.txt )
