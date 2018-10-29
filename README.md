@@ -34,15 +34,21 @@ On production environment, all dependencies can be installed on default
 system directories, such as `/usr/lib` or `/usr/bin`.
 
 ```
-$ export AVB_DEPS=~/opt/libs
-$ mkdir -p $AVB_DEPS
+if you want to install libs in your local path.
+	$ export AVB_DEPS=~/opt/libs
+	$ mkdir -p $AVB_DEPS
 
 
 # ALSA-LIB #
 
 $ autoreconf -i
-$ ./configure --prefix=$AVB_DEPS --with-pythonlibs="-lpthread -lm -ldl
-    -lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
+for custom location
+	$ ./configure --prefix=$AVB_DEPS --with-pythonlibs="-lpthread -lm -ldl
+    	-lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
+for default location
+	$ ./configure --with-pythonlibs="-lpthread -lm -ldl
+    	-lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
+
 $ make
 $ make install
 
@@ -50,8 +56,14 @@ $ make install
 # DLT-DAEMON #
 
 $ mkdir build && cd build
-$ cmake .. -DCMAKE_INSTALL_PREFIX=$AVB_DEPS -DCMAKE_INSTALL_LIBDIR=lib
-	   -DWITH_DLT_CXX11_EXT=ON
+for custom location
+	$ cmake .. -DCMAKE_INSTALL_PREFIX=$AVB_DEPS -DCMAKE_INSTALL_LIBDIR=lib
+		   -DWITH_DLT_CXX11_EXT=ON
+for default location
+	for clear linux OS
+		$ cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DWITH_DLT_CXX11_EXT=ON
+	for others
+		$ cmake .. -DWITH_DLT_CXX11_EXT=ON
 $ make
 $ make install
 
@@ -62,25 +74,41 @@ $ make install
 - if it isn't provided, then check your version with `uname -r`
 - go to https://mirrors.edge.kernel.org/pub/linux/kernel/ and download the
   right .tar.gz file for your version and do the following:
-$ sudo mkdir -p /usr/src
-$ sudo mv linux-tarball-FOO.tar.gz /usr/src
-$ cd /usr/src
-$ sudo tar xf linux-tarball-FOO.tar.gz
-$ sudo mv linux-FOO linux-`uname -r`
-$ cd linux-VERSION
-$ zcat /proc/config.gz | sudo tee .config
-$ sudo -E make modules_prepare
+for clear linux
+	$ swupd bundle-list
+	$ swupd bundle-add linux-dev
+for other distros
+	$ sudo mkdir -p /usr/src
+	$ sudo mv linux-tarball-FOO.tar.gz /usr/src
+	$ cd /usr/src
+	$ sudo tar xf linux-tarball-FOO.tar.gz
+	$ sudo mv linux-FOO linux-`uname -r`
+	$ cd linux-VERSION
+	$ zcat /proc/config.gz | sudo tee .config
+	$ sudo -E make modules_prepare
+
+
 
 
 # AVB StreamHandler #
 
 $ mkdir build && cd build
-$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 ../
+for clear linux
+	$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 -DCMAKE_INSTALL_PREFIX=/usr ../
+for others
+	$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 ../
+
 $ make setcap_tool
-$ install setcap_tool $AVB_DEPS/bin/
-$ sudo setcap cap_setfcap=pe $AVB_DEPS/bin/setcap_tool
-$ AVB_SETCAP_TOOL=$AVB_DEPS/bin/setcap_tool make
-```
+for your local path
+	$ install setcap_tool $AVB_DEPS/bin/
+	$ sudo setcap cap_setfcap=pe $AVB_DEPS/bin/setcap_tool
+	$ AVB_SETCAP_TOOL=$AVB_DEPS/bin/setcap_tool make
+
+for default path
+	$ install setcap_tool
+	$ sudo setcap cap_setfcap=pe ./setcap_tool
+	$ make
+
 
 ### Send an Audio stream w/ AVBSH demo
 
@@ -98,16 +126,32 @@ $ sudo usermod -a -G ias_avb <username>
 $ sudo usermod -a -G ias_audio <username>
 - Restart the session.
 
-$ cp deps/audio/common/public/res/50-smartx.conf $AVB_DEPS/share/alsa/alsa.conf.d
-     /51-smartx.conf
-$ cp build/deps/audio/common/libasound_module_* $AVB_DEPS/lib/alsa-lib/
-- Modify $AVB_DEPS/share/alsa/alsa.conf.d/51-smartx.conf to include:
-	pcm_type.smartx {
-		lib "<$AVB_DEPS>/lib/alsa-lib/libasound_module_pcm_smartx.so"
-	}
-  After the pcm.smartx block.
-- This is key to ensure that ALSA and AVBSH are able to communicate with each
-  other.
+for your local path
+	(for alsa lib v.1.1.6 or before)
+		$ cp deps/audio/common/public/res/50-smartx.conf $AVB_DEPS/share/alsa/alsa.conf.d/51-smartx.conf
+	(for alsa lib v1.1.7 or later, conf location is fixed to /etc/alsa/conf.d/)
+		$ cp deps/audio/common/public/res/50-smartx.conf $AVB_DEPS/share/alsa/alsa.conf.d/51-smartx.conf
+	$ cp build/deps/audio/common/libasound_module_* $AVB_DEPS/lib/alsa-lib/
+	- Modify $AVB_DEPS/share/alsa/alsa.conf.d/51-smartx.conf to include:
+		pcm_type.smartx {
+			lib "<$AVB_DEPS>/lib/alsa-lib/libasound_module_pcm_smartx.so"
+		}
+	  After the pcm.smartx block.
+	- This is key to ensure that ALSA and AVBSH are able to communicate with each
+	  other.
+for your local path
+	$ cp deps/audio/common/public/res/50-smartx.conf /etc/alsa/conf.d/51-smartx.conf
+	for clear linux
+		$ cp build/deps/audio/common/libasound_module_* /usr/lib64/alsa-lib/
+	for other distros
+		$ cp build/deps/audio/common/libasound_module_* /usr/lib/alsa-lib/
+	- Modify 51-smartx.conf to include:
+		pcm_type.smartx {
+			lib "<path to lib>/alsa-lib/libasound_module_pcm_smartx.so"
+		}
+	  After the pcm.smartx block.
+	- This is key to ensure that ALSA and AVBSH are able to communicate with each
+	  other.
 
 
 # Create shared memory for the smartx plugin #
@@ -129,8 +173,12 @@ $ sudo chgrp ias_avb /dev/ptp*
 
 # Start the DLT daemon (for logging and tracing) #
 
-$ cd $AVB_DEPS/bin
-$ ./dlt-daemon -d (to daemonize)
+for custom location
+	$ cd $AVB_DEPS/bin
+	$ ./dlt-daemon -d (to daemonize)
+for default location
+	dlt-daemon -d (to daemonize)
+
 
 # Following is necessary on development environment. If AVB Stream Handler
 # dependencies were installed on system default directories, it is not
@@ -147,28 +195,22 @@ $ export LD_LIBRARY_PATH=$AVB_DEPS
 
 - On Master
 $ sudo setcap cap_net_admin,cap_net_raw,cap_sys_nice+ep deps/gptp/linux/build/obj/daemon_cl
-
-# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
 $ deps/gptp/linux/build/obj/daemon_cl <I210 interface name> -G ias_avb -R 200 -GM &> /tmp/daemon_cl.log &
 
 - On Slave
 $ sudo setcap cap_net_admin,cap_net_raw,cap_sys_nice+ep deps/gptp/linux/build/obj/daemon_cl
-
-# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
 $ deps/gptp/linux/build/obj/daemon_cl <I210 interface name> -G ias_avb -R 200 -S &> /tmp/daemon_cl.log &
 
 # Run the AVBSH demo #
 
 - On Master
 
-# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
 $ build/avb_streamhandler_demo -c -s
   pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
   -p MRB_Master_Audio -n <I210 interface name> &> /tmp/avbsh.log &
 
 - On Slave
 
-# Run with `sudo` if AVB Stream Handler dependencies are installed on `AVB_DEPS`
 $ build/avb_streamhandler_demo -c -s
   pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
   -p MRB_Slave_Audio -n <I210 interface name> &> /tmp/avbsh.log &
@@ -177,12 +219,18 @@ $ build/avb_streamhandler_demo -c -s
 # Finally, transfer an audio stream w/ aplay #
 
 - On Master
-$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib aplay -D avb:stereo_0 <wav file>
-
+for local lib path
+	$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib aplay -D avb:stereo_0 <wav file>
+for default lib path
+	$ aplay -D avb:stereo_0 <wav file>
+	
 - On Slave
-$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib aplay -C -f dat -D avb:stereo_0 record.wav
-  (quit with ^C once the master is done playing)
-```
+for local lib path
+	$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib aplay -C -f dat -D avb:stereo_0 record.wav
+	  (quit with ^C once the master is done playing)
+for default lib path
+	$ aplay -C -f dat -D avb:stereo_0 record.wav
+	  (quit with ^C once the master is done playing)
 
 ### Testing video stream
 
@@ -206,14 +254,25 @@ Note that <video-profile-master> can be `Video_POC_Master` for H.264 or
 Then, run the `avb_video_debug_app`:
 
 - On Master (for H.264)
-$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -h -s
-or (for MPEG-TS)
-$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -s
+for local lib path
+	$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -h -s
+	or (for MPEG-TS)
+	$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -s
+for default lib path
+	$ sudo build/avb_video_debug_app -h -s
+	or (for MPEG-TS)
+	$ sudo build/avb_video_debug_app -m -s
+
 
 - On Slave (for H.264)
-$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -h -r
-or (for MPEG-TS)
-$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -r
+for local lib path
+	$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -h -r
+	or (for MPEG-TS)
+	$ sudo LD_LIBRARY_PATH=$AVB_DEPS/lib build/avb_video_debug_app -m -r
+for default lib path
+	$ sudo build/avb_video_debug_app -h -r
+	or (for MPEG-TS)
+	$ sudo build/avb_video_debug_app -m -r
 
 Output should contain messages about sending (or receiving) packets with
 success.
