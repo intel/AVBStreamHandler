@@ -61,7 +61,7 @@ for custom location
 		   -DWITH_DLT_CXX11_EXT=ON
 for default location
 	for clear linux OS
-		$ cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DWITH_DLT_CXX11_EXT=ON
+		$ cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib64 -DWITH_DLT_CXX11_EXT=ON
 	for others
 		$ cmake .. -DWITH_DLT_CXX11_EXT=ON
 $ make
@@ -93,10 +93,18 @@ for other distros
 # AVB StreamHandler #
 
 $ mkdir build && cd build
-for clear linux
-	$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 -DCMAKE_INSTALL_PREFIX=/usr ../
-for others
-	$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 ../
+for your local path
+	for clear linux
+		$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 -DCMAKE_INSTALL_PREFIX=/usr ../
+	for others
+		$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 ../
+
+for default path
+	for clear linux
+		$ cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 -DCMAKE_INSTALL_PREFIX=/usr ../
+	for others
+		$ cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 ../
+
 
 $ make setcap_tool
 for your local path
