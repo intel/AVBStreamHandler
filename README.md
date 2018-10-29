@@ -96,7 +96,7 @@ $ mkdir build && cd build
 for clear linux
 	$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 -DCMAKE_INSTALL_PREFIX=/usr ../
 for others
-	$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 ../
+	$ env PKG_CONFIG_PATH=$AVB_DEPS/lib/pkgconfig cmake -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 ../
 
 $ make setcap_tool
 for your local path
@@ -108,6 +108,7 @@ for default path
 	$ install setcap_tool
 	$ sudo setcap cap_setfcap=pe ./setcap_tool
 	$ make
+	$ make install
 
 
 ### Send an Audio stream w/ AVBSH demo
@@ -139,7 +140,7 @@ for your local path
 	  After the pcm.smartx block.
 	- This is key to ensure that ALSA and AVBSH are able to communicate with each
 	  other.
-for your local path
+for your default path
 	$ cp deps/audio/common/public/res/50-smartx.conf /etc/alsa/conf.d/51-smartx.conf
 	for clear linux
 		$ cp build/deps/audio/common/libasound_module_* /usr/lib64/alsa-lib/
@@ -204,17 +205,24 @@ $ deps/gptp/linux/build/obj/daemon_cl <I210 interface name> -G ias_avb -R 200 -S
 # Run the AVBSH demo #
 
 - On Master
-
-$ build/avb_streamhandler_demo -c -s
-  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
-  -p MRB_Master_Audio -n <I210 interface name> &> /tmp/avbsh.log &
+for local lib path
+	$ build/avb_streamhandler_demo -c -s
+	  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
+	  -p MRB_Master_Audio -n <I210 interface name> &> /tmp/avbsh.log &
+for default lib path
+	$ avb_streamhandler_demo -c -s
+	  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
+	  -p MRB_Master_Audio -n <I210 interface name> &> /tmp/avbsh.log &
 
 - On Slave
-
-$ build/avb_streamhandler_demo -c -s
-  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
-  -p MRB_Slave_Audio -n <I210 interface name> &> /tmp/avbsh.log &
-
+for local lib path
+	$ build/avb_streamhandler_demo -c -s
+	  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
+	  -p MRB_Slave_Audio -n <I210 interface name> &> /tmp/avbsh.log &
+for default lib path
+	$ avb_streamhandler_demo -c -s
+	  pluginias-media_transport-avb_configuration_reference.so setup --target GrMrb
+	  -p MRB_Slave_Audio -n <I210 interface name> &> /tmp/avbsh.log &
 
 # Finally, transfer an audio stream w/ aplay #
 
