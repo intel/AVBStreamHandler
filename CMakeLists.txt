@@ -84,6 +84,7 @@ include( CMakeLists.avb_clockdriver.txt )
 include( CMakeLists.avb_streamhandler_demo.txt )
 include( CMakeLists.avb_video_bridge.txt )
 include( CMakeLists.avb_video_debug_app.txt )
+include( CMakeLists.avb_watchdog.txt )
 
 #------------------------------------------------------------------
 #Include makefile building internal tools (only on host / not needed on target)
@@ -107,6 +108,7 @@ endif()
 #------------------------------------------------------------------
 include(doxygen/ias_defines_doxygen.cmake)
 
+#TODO Vince add doxygen for watchdog
 IasCreateComponentDocumentation( media_transport avb_streamhandler ${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_MAJOR}
                                                                    ${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_MINOR}
                                                                    ${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_REVISION}

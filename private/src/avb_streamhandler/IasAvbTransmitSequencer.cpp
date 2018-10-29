@@ -73,7 +73,7 @@ IasAvbTransmitSequencer::IasAvbTransmitSequencer(DltContext &ctx)
   , mLock()
   , mEventInterface(NULL)
   , mLog(&ctx)
-//  , mWatchdog(NULL)
+  , mWatchdog(NULL)
   , mFirstRun(true)
   , mBTMEnable(false)
   , mStrictPktOrderEn(true)
@@ -217,14 +217,16 @@ IasAvbProcessingResult IasAvbTransmitSequencer::init(uint32_t queueIndex, IasAvb
   if (eIasAvbProcOK == result)
   {
     uint64_t val = 0u;
-    (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cXmitUseWatchdog, val);
+    (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cUseWatchdog, val);
 
     if ((0u != val) && (IasAvbStreamHandlerEnvironment::isWatchdogEnabled()))
     {
       result = eIasAvbProcInitializationFailed;
 
-#if 0 // TODO KSL: to be replace by sufficient implementation      IasWatchdog::IasIWatchdogManagerInterface* wdManager = NULL;
+      //Get the watchdog manager pointer and create a watchdog entry but not register it.
+      IasWatchdog::IasSystemdWatchdogManager* wdManager = NULL;
       wdManager = IasAvbStreamHandlerEnvironment::getWatchdogManager();
+
       if (NULL != wdManager)
       {
         uint32_t timeout = IasAvbStreamHandlerEnvironment::getWatchdogTimeout();
@@ -233,12 +235,15 @@ IasAvbProcessingResult IasAvbTransmitSequencer::init(uint32_t queueIndex, IasAvb
         mWatchdog = wdManager->createWatchdog(timeout, wdName);
         if (NULL != mWatchdog)
         {
-           DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, " supervised watchdog name:",
+          DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, " supervised watchdog name:",
               wdName.c_str(), "timeout:", timeout, "ms");
           result = eIasAvbProcOK;
         }
       }
-#endif
+      else
+      {
+        DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "AvbStreamHandlerEnvironment could not getWatchdogManager");
+      }
     }
   }
 
@@ -253,7 +258,6 @@ IasAvbProcessingResult IasAvbTransmitSequencer::init(uint32_t queueIndex, IasAvb
   return result;
 }
 
-
 void IasAvbTransmitSequencer::cleanup()
 {
   if (mTransmitThread != NULL && mTransmitThread->isRunning())
@@ -263,10 +267,9 @@ void IasAvbTransmitSequencer::cleanup()
   delete mTransmitThread;
   mTransmitThread = NULL;
 
-#if 0 // TODO KSL: to be replace by sufficient implementation
   if (NULL != mWatchdog)
   {
-    IasWatchdog::IasIWatchdogManagerInterface* wdManager = NULL;
+    IasWatchdog::IasSystemdWatchdogManager* wdManager = NULL;
     wdManager = IasAvbStreamHandlerEnvironment::getWatchdogManager();
     if (NULL != wdManager)
     {
@@ -274,7 +277,6 @@ void IasAvbTransmitSequencer::cleanup()
       mWatchdog = NULL;
     }
   }
-#endif
 }
 
 IasAvbProcessingResult IasAvbTransmitSequencer::registerEventInterface( IasAvbStreamHandlerEventInterface * eventInterface )
@@ -511,11 +513,9 @@ IasResult IasAvbTransmitSequencer::run()
 
       if (!linkState)
       {
-#if 0 //TO BE REPLACED
         // disable the watchdog while link is down
         if ((NULL != mWatchdog) && (mWatchdog->isRegistered()))
           (void) mWatchdog->unregisterWatchdog();
-#endif
         const uint32_t cPollLinkPerSecond = 1u << 5; // 32
         if (0u == (linkStateWaitCount & (cPollLinkPerSecond - 1u)))
         {
@@ -532,11 +532,9 @@ IasResult IasAvbTransmitSequencer::run()
         linkStateWaitCount = 0u;
         if (oldLinkState != linkState)
         {
-#if 0 //TO BE REPLACED
           // just make sure the watchdog is inactive before entering the long-sleep
           if ((NULL != mWatchdog) && (mWatchdog->isRegistered()))
             (void) mWatchdog->unregisterWatchdog();
-#endif
 
           DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, "link state has changed from",
               oldLinkState, "to", linkState);
@@ -551,7 +549,6 @@ IasResult IasAvbTransmitSequencer::run()
       }
       streamsToService = mSequence.size();
 
-#if 0 //TO BE REPLACED
       if (0u != streamsToService)
       {
         // there is at least one active stream, enable the watchdog
@@ -564,7 +561,7 @@ IasResult IasAvbTransmitSequencer::run()
           }
           else
           {
-            // reset() starts the timer
+            // reset() is required to start the timer
             (void) mWatchdog->reset();
           }
         }
@@ -575,7 +572,7 @@ IasResult IasAvbTransmitSequencer::run()
         if ((NULL != mWatchdog) && (mWatchdog->isRegistered()))
           (void) mWatchdog->unregisterWatchdog();
       }
-#endif
+
       for (AvbStreamDataList::iterator it = mSequence.begin(); it != mSequence.end(); it++)
       {
         it->done = eNotDone;
@@ -686,7 +683,6 @@ IasResult IasAvbTransmitSequencer::run()
 
   }
 
-#if 0 //TO BE REPLACED
   // unregister the watchdog before exiting the thread
   if ((NULL != mWatchdog) && mWatchdog->isRegistered())
   {
@@ -700,7 +696,6 @@ IasResult IasAvbTransmitSequencer::run()
 
     (void) mWatchdog->unregisterWatchdog();
   }
-#endif
 
   return IasResult::cOk;
 }
@@ -877,12 +872,10 @@ IasAvbTransmitSequencer::DoneState IasAvbTransmitSequencer::serviceStream(uint64
              * Audio stream prepares dummy packets when clock reference is not available typically
              * on the slave side. For the both cases we consider the Streamhandler is still alive.
              */
-#if 0 //TO BE REPLACED
             if ((NULL != mWatchdog) && (mWatchdog->isRegistered()))
             {
               (void) mWatchdog->reset();
             }
-#endif
           }
         }
         else
@@ -974,13 +967,11 @@ IasAvbTransmitSequencer::DoneState IasAvbTransmitSequencer::serviceStream(uint64
               diaLogger->incTxCount();
             }
 
-#if 0 //TO BE REPLACED
             // reset the watchdog timer when packet was successfully sent
             if ((NULL != mWatchdog) && mWatchdog->isRegistered())
             {
               (void) mWatchdog->reset();
             }
-#endif
 
             break;
 

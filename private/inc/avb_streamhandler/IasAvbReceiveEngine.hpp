@@ -19,6 +19,7 @@
 #include "avb_helper/IasThread.hpp"
 #include "avb_streamhandler/IasAvbStream.hpp"
 #include "avb_streamhandler/IasAvbStreamHandlerEnvironment.hpp"
+#include "avb_watchdog/IasWatchdogInterface.hpp"
 #include "avb_helper/IasIRunnable.hpp"
 #include <mutex>
 #include <linux/if_ether.h>
@@ -380,16 +381,17 @@ class IasAvbReceiveEngine : private IasMediaTransportAvb::IasIRunnable
     // Member Variables
     //
 
-    std::string const       mInstanceName;
-    bool               mEndThread;
-    IasThread   * mReceiveThread;
-    AvbStreamMap       mAvbStreams;
-    std::mutex         mLock;
-    IasAvbStreamHandlerEventInterface * mEventInterface;
-    int32_t              mReceiveSocket;
-    uint8_t            * mReceiveBuffer;
-    bool               mIgnoreStreamId;
-    DltContext        *mLog;           // context for Log & Trace
+    std::string const			mInstanceName;
+    bool				mEndThread;
+    IasThread				*mReceiveThread;
+    AvbStreamMap			mAvbStreams;
+    std::mutex				mLock;
+    IasAvbStreamHandlerEventInterface*	mEventInterface;
+    int32_t				mReceiveSocket;
+    uint8_t				*mReceiveBuffer;
+    bool				mIgnoreStreamId;
+    DltContext				*mLog;           // context for Log & Trace
+    IasWatchdog::IasWatchdogInterface	*mWatchdog;
 
 #if defined(DIRECT_RX_DMA)
     device_t         * mIgbDevice;

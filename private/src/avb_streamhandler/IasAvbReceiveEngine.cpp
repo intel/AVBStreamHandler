@@ -81,6 +81,7 @@ IasAvbReceiveEngine::IasAvbReceiveEngine()
 , mReceiveBuffer(NULL)
 , mIgnoreStreamId(false)
 , mLog(&IasAvbStreamHandlerEnvironment::getDltContext("_RXE"))
+, mWatchdog(NULL)
 #if defined(DIRECT_RX_DMA)
 , mIgbDevice(NULL)
 , mRcvPacketPool(NULL)
@@ -157,6 +158,42 @@ IasAvbProcessingResult IasAvbReceiveEngine::init()
     if (eIasAvbProcOK == result)
     {
       result = openReceiveSocket();
+    }
+
+    if (result == eIasAvbProcOK)
+    {
+      uint64_t val = 0u;
+      (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cUseWatchdog, val);
+      if (val && IasAvbStreamHandlerEnvironment::isWatchdogEnabled())
+      {
+        IasWatchdog::IasSystemdWatchdogManager* wdManager = NULL;
+        wdManager = IasAvbStreamHandlerEnvironment::getWatchdogManager();
+
+        if (wdManager)
+        {
+          uint32_t timeout = IasAvbStreamHandlerEnvironment::getWatchdogTimeout();
+          std::string wdName = std::string("AvbRxWd");
+
+          mWatchdog = wdManager->createWatchdog(timeout, wdName);
+          if (mWatchdog)
+          {
+            DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, " supervised watchdog name:",
+                        wdName.c_str(), "timeout:", timeout, "ms");
+            result = eIasAvbProcOK;
+          }
+          else
+          {
+            DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Failed to create watchdog: ", wdName.c_str());
+            result = eIasAvbProcInitializationFailed;
+          }
+        }
+        else
+        {
+          DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "AvbStreamHandlerEnvironment could"
+                      " not getWatchdogManager");
+          result = eIasAvbProcInitializationFailed;
+        }
+      }
     }
 
     if (eIasAvbProcOK != result)
@@ -923,6 +960,10 @@ IasResult IasAvbReceiveEngine::run()
   {
     while (!IasAvbStreamHandlerEnvironment::isLinkUp() && !mEndThread)
     {
+      /* Don't monitor if the link is down */
+      if (mWatchdog && (mWatchdog->isRegistered()))
+        (void) mWatchdog->unregisterWatchdog();
+
       DLT_LOG_CXX(*mLog, DLT_LOG_INFO, LOG_PREFIX, "waiting for network link...");
       ::sleep( 1u );
     }
@@ -964,6 +1005,20 @@ IasResult IasAvbReceiveEngine::run()
         (void) dispatchPacket(it->second, NULL, 0u, now);
       }
       (void) unlock();
+
+      /* Reset the timer even if we're idle waiting for packets */
+      if (mWatchdog)
+      {
+        if(!mWatchdog->isRegistered())
+        {
+          if (mWatchdog->registerWatchdog() != IasResult::cOk)
+          {
+            DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, " watchdog registration failure...");
+            mEndThread = true;
+          }
+        }
+	(void) mWatchdog->reset();
+      }
     }
     else if (selectResult < 0)
     {
@@ -988,6 +1043,20 @@ IasResult IasAvbReceiveEngine::run()
         }
         (void) unlock();
         lastTimeoutCheck = now; // Memorize the time of the last timeout check
+
+        /* For a specific stream timeout, it should still be valid to reset the watchdog timer */
+        if (mWatchdog)
+        {
+          if(!mWatchdog->isRegistered())
+          {
+            if (mWatchdog->registerWatchdog() != IasResult::cOk)
+            {
+              DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, " watchdog registration failure...");
+              mEndThread = true;
+            }
+          }
+          (void) mWatchdog->reset();
+        }
       }
       else
       {
@@ -1249,6 +1318,20 @@ IasResult IasAvbReceiveEngine::run()
                         stream->setSmac(sMac);
                       }
                       packetsValid++;
+
+                      /* Finally, if the pkt was set successfully, we reset the watchdog timer */
+                      if (mWatchdog)
+                      {
+                        if (!mWatchdog->isRegistered())
+                        {
+                          if (mWatchdog->registerWatchdog() != IasResult::cOk)
+                          {
+                            DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, " watchdog registration failure...");
+                            mEndThread = true;
+                          }
+                        }
+                        (void) mWatchdog->reset();
+                      }
                     }
                   }
                 }
@@ -1320,6 +1403,10 @@ IasResult IasAvbReceiveEngine::run()
     }
   }
 
+  /* Unregister the watchdog on thread exit */
+  if (mWatchdog && mWatchdog->isRegistered())
+    mWatchdog->unregisterWatchdog();
+
   return IasResult::cOk;
 }
 
@@ -1381,6 +1468,18 @@ void IasAvbReceiveEngine::cleanup()
   delete[] mReceiveBuffer;
   mReceiveBuffer = NULL;
 #endif /* !DIRECT_RX_DMA */
+
+  if (mWatchdog)
+  {
+    IasWatchdog::IasSystemdWatchdogManager* wdManager = NULL;
+    wdManager = IasAvbStreamHandlerEnvironment::getWatchdogManager();
+
+    if (wdManager)
+    {
+      (void) wdManager->destroyWatchdog(mWatchdog);
+      mWatchdog = NULL;
+    }
+  }
 
   for (AvbStreamMap::iterator it = mAvbStreams.begin(); it != mAvbStreams.end(); it++)
   {
