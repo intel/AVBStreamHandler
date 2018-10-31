@@ -1,0 +1,22 @@
+# Generic template for all ALSA <-> SmartXbar plugins
+# Can be used to dynamically create an ALSA to SmartXbar adapter by using it like this:
+# aplay -Dsmartx:MyNewDev ~/Music/<some wav file>
+
+pcm.smartx {
+  @args [ NAME ]
+  @args.NAME {
+    type string
+  }
+  type smartx
+  name $NAME
+}
+
+pcm_type.smartx
+{
+	lib "@INSTALL_LIBDIR@/libasound_module_pcm_smartx.so"
+}
+# The same plugin is used for avb but with a different prefix.
+# Is has to be used like this:
+# aplay -Davb:MyNewDev ~/Music/<some wav file>
+pcm.avb = pcm.smartx
+
