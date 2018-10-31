@@ -139,17 +139,20 @@ for your local path
 	(for alsa lib v.1.1.6 or before)
 		$ cp deps/audio/common/public/res/50-smartx.conf $AVB_DEPS/share/alsa/alsa.conf.d/51-smartx.conf
 	(for alsa lib v1.1.7 or later, conf location is fixed to /etc/alsa/conf.d/)
-		$ cp deps/audio/common/public/res/50-smartx.conf $AVB_DEPS/share/alsa/alsa.conf.d/51-smartx.conf
+		$ cp deps/audio/common/public/res/50-smartx.conf /etc/alsa/conf.d/51-smartx.conf
 	$ cp build/deps/audio/common/libasound_module_* $AVB_DEPS/lib/alsa-lib/
 	- Modify $AVB_DEPS/share/alsa/alsa.conf.d/51-smartx.conf to include:
 		pcm_type.smartx {
-			lib "<$AVB_DEPS>/lib/alsa-lib/libasound_module_pcm_smartx.so"
+			lib "<$AVB_DEPS>/lib/alsa-lib/libaso:wqund_module_pcm_smartx.so"
 		}
 	  After the pcm.smartx block.
 	- This is key to ensure that ALSA and AVBSH are able to communicate with each
 	  other.
 for your default path
-	$ cp deps/audio/common/public/res/50-smartx.conf /etc/alsa/conf.d/51-smartx.conf
+	(for alsa lib v.1.1.6 or before)
+		$ cp deps/audio/common/public/res/50-smartx.conf /usr/share/alsa/conf.d/51-smartx.conf
+	(for alsa lib v1.1.7 or later, conf location is fixed to /etc/alsa/conf.d/)
+		$ cp deps/audio/common/public/res/50-smartx.conf /etc/alsa/conf.d/51-smartx.conf
 	for clear linux
 		$ cp build/deps/audio/common/libasound_module_* /usr/lib64/alsa-lib/
 	for other distros
