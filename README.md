@@ -46,6 +46,10 @@ for custom location
 	$ ./configure --prefix=$AVB_DEPS --with-pythonlibs="-lpthread -lm -ldl
     	-lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
 for default location
+	for clearlinux 
+	$ ./configure --lib64=/usr/lib64 --with-pythonlibs="-lpthread -lm -ldl
+    	-lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
+	for others
 	$ ./configure --with-pythonlibs="-lpthread -lm -ldl
     	-lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
 
