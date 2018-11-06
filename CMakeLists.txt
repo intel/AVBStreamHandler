@@ -15,7 +15,12 @@ pkg_check_modules(DLT REQUIRED automotive-dlt-c++)
 
 add_subdirectory( deps/audio/common )
 
+#SET(GPTP_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+string(REPLACE " -O3" " -O2" GPTP_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+#-----------------------------------------------------------
 # build igb_avb and gptp libraries and driver before searching for libraries
+#-----------------------------------------------------------
 execute_process( COMMAND make lib CFLAGS=-fPIC
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/igb_avb
 )
@@ -23,7 +28,7 @@ execute_process( COMMAND make kmod
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/igb_avb
 )
 
-execute_process( COMMAND make
+execute_process( COMMAND make CXXFLAGS=${GPTP_CXX_FLAGS}
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/gptp/linux/build
 )
 
