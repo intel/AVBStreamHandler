@@ -15,7 +15,6 @@ pkg_check_modules(DLT REQUIRED automotive-dlt-c++)
 
 add_subdirectory( deps/audio/common )
 
-#SET(GPTP_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 string(REPLACE " -O3" " -O2" GPTP_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 #-----------------------------------------------------------
