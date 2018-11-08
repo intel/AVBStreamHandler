@@ -33,6 +33,7 @@ add_executable( test_IasTestAvbStreamhandler
                 private/tst/avb_streamhandler/src/IasTestAvbConfigurationBase.cpp
                 private/tst/avb_streamhandler/src/IasTestAvbMain.cpp
                 private/tst/avb_streamhandler/src/IasTestAvbClockDriver.cpp
+                private/tst/avb_streamhandler/src/IasTestVideoRingBufferShm.cpp
                 )
 
 target_compile_options( test_IasTestAvbStreamhandler PRIVATE -Wno-error )
