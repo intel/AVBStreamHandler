@@ -848,7 +848,7 @@ void IasLocalAudioStream::setClientActive( bool active )
            * The resetBuffers() call at here may change buffer fill level. If ALSA worker has already
            * started reading samples, changing buffer fill level from outside of ALSA worker affects
            * calculation of RX path latency. The fix of 'alsaRxSyncStart = true' can be disabled
-           * by the registry key for GP releases to avoid causing any regression for existing customers.
+           * by the registry key for GP releases to avoid causing any regression for existing users.
            */
         }
         else

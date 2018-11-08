@@ -263,7 +263,7 @@ StreamParamsAlsa SlaveSetupAlsa[] =
 /*
  * The Streamhandler uses a "registry" data base of key/value pairs. Values can be either 64 bit
  * unsigned integer or string values. The entries are used to parameterize the Streamhandler's
- * behavior in multiple ways. A list of customer-relevant parameters can be found in
+ * behavior in multiple ways. A list of user-relevant parameters can be found in
  * IasAvbRegistryKeys.hpp. Registry entry lists can be associated with profiles and/or targets.
  *
  * Depending on the isNum field, the registry entry is either numerical or textual. Either the
@@ -303,7 +303,7 @@ RegistryEntries ExampleSetupRegistry[] =
 TargetParams Targets[] =
 {
     { "GrMrb",    0x1533u, 2u, "eth0", NULL }, // example entry for Gordon Ridge MRB
-    { "MyDevice", 0x157Cu, 1u, "eth0", NULL }  // example entry for customer hardware
+    { "MyDevice", 0x157Cu, 1u, "eth0", NULL }  // example entry for user hardware
 };
 
 //------------------------------------------

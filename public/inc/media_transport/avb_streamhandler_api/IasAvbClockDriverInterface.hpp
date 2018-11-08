@@ -88,7 +88,7 @@ class __attribute__ ((visibility ("default"))) IasAvbClockDriverInterface
      * after passArguments() of the config library has been called.
      * So the config library has the option of passing confguration
      * values to the clock driver by putting them into the registry.
-     * The key names of all customer-specific registry entries controlling
+     * The key names of all user-specific registry entries controlling
      * the clock driver should start with "clockdriver.config.".
      *
      * If anything other than eIasAvbResultOk is returned by the method,
