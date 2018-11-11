@@ -33,9 +33,10 @@ add_executable( test_IasTestAvbStreamhandler
                 private/tst/avb_streamhandler/src/IasTestAvbConfigurationBase.cpp
                 private/tst/avb_streamhandler/src/IasTestAvbMain.cpp
                 private/tst/avb_streamhandler/src/IasTestAvbClockDriver.cpp
+                private/tst/avb_streamhandler/src/IasTestSystemdWatchdog.cpp
                 )
 
-target_compile_options( test_IasTestAvbStreamhandler PRIVATE -Wno-error )
+target_compile_options( test_IasTestAvbStreamhandler PRIVATE -Wno-error -Wsign-conversion)
 
 #find_package(PkgConfig)
 #pkg_check_modules(DLT REQUIRED automotive-dlt)
