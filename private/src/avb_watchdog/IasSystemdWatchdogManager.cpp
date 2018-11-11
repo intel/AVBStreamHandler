@@ -106,6 +106,7 @@ IasWatchdogResult IasSystemdWatchdogManager::init(std::shared_ptr<IasWatchdogTim
   else
   {
     DLT_LOG_CXX(mDltContext, DLT_LOG_WARN, "IasSystemdWatchdogManager no watchdog configuration found in env 'WATCHDOG_USEC'. Disable checking.");
+    result = IasMediaTransportAvb::IasResult::cInitFailed;
   }
 
   if ( result.toString() == IasMediaTransportAvb::IasResult::cOk.toString() && ( mResetTimespan > 0LL) )  //watchdog result type not compatible with IAS_SUCCEED
@@ -145,7 +146,9 @@ IasWatchdogInterface* IasSystemdWatchdogManager::createWatchdog(uint32_t timeout
 {
   IasWatchdogInterface * watchdogInterface = nullptr;
 
-  std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
+  if (timeout != 0)
+  {
+    std::lock_guard<std::recursive_mutex> mutexGuard(mWatchdogInterfacesMutex);
 
     watchdogInterface = new IasWatchdogInterface(*this, mDltContext);
     if (watchdogInterface)
@@ -154,8 +157,8 @@ IasWatchdogInterface* IasSystemdWatchdogManager::createWatchdog(uint32_t timeout
       watchdogInterface->setName(watchdogName);
       mWatchdogInterfaces.push_back(watchdogInterface);
     }
-
-    return watchdogInterface;
+  }
+  return watchdogInterface;
 }
 
 IasWatchdogResult IasSystemdWatchdogManager::destroyWatchdog(IasWatchdogInterface* watchdog)

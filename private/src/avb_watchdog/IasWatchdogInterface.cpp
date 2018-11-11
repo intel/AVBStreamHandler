@@ -47,22 +47,13 @@ IasWatchdogResult IasWatchdogInterface::registerWatchdog(uint32_t timeout, std::
 {
   IasWatchdogResult result = IasMediaTransportAvb::IasResult::cOk;
 
-  if( watchdogName.empty())
+  if( watchdogName.empty() || (timeout == 0))
   {
     DLT_LOG_CXX(
             mDltContext,
             DLT_LOG_ERROR,
-            "Failed to register watchdog, given watchdog name is empty");
-        result = IasWatchdogResult::cParameterInvalid;
-  }
-
-  if (IasMediaTransportAvb::IAS_SUCCEEDED(result) && timeout == 0u)
-  {
-    DLT_LOG_CXX(
-                mDltContext,
-                DLT_LOG_ERROR,
-                "Failed to register watchdog, invalid timeout");
-            result = IasWatchdogResult::cParameterInvalid;
+            "Failed to register watchdog, given watchdog name is empty or invalid timeout");
+    return IasWatchdogResult::cParameterInvalid;
   }
 
   if ( IasMediaTransportAvb::IAS_SUCCEEDED(result) && mProcessId!= 0u )
