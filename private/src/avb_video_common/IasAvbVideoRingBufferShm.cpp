@@ -48,6 +48,7 @@ IasAvbVideoRingBufferShm::IasAvbVideoRingBufferShm()
   , mCondWrite()
   , mReadWaitLevel(0)
   , mWriteWaitLevel(0)
+  , mAllowedToWrite(0)
   , mMutexReaders()
   , mReaders{}
 {
@@ -150,6 +151,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
         *numBuffers = mNumBuffers - *offset;
       }
 
+      reader->allowedToRead = *numBuffers;
       updateReaderAccess(reader);
 
       fprintf(stderr, "Begin Read access (%d). *numBuffers: %u *offset: %u reader->offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, reader->offset, mBufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
@@ -185,6 +187,9 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
       {
         *numBuffers = mReadOffset - mWriteOffset - 1;
       }
+
+      mAllowedToWrite = *numBuffers;
+
       fprintf(stderr, "Begin Write access (%d). *numBuffers: %u *offset: %u mBufferLevel: %u CalcBufLevel: %u\n", pid, *numBuffers, *offset, bufferLevel, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
     }
   }
@@ -203,48 +208,45 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
   }
   else if (eIasRingBufferAccessRead == access)
   {
-    if (static_cast<int32_t>(mBufferLevel - numBuffers) < 0)
+    RingBufferReader *reader = findReader(pid);
+    if (reader == nullptr)
     {
       result = eIasRingBuffInvalidParam;
-      fprintf(stderr, "End access FAIL: mBufferLevel: %u numBuffers: %u offset: %u CalcBufLevel: %u\n", mBufferLevel, numBuffers, offset, (mWriteOffset - mReadOffset) % (mNumBuffers + 1));
+    }
+    else if (numBuffers > reader->allowedToRead)
+    {
+      result = eIasRingBuffInvalidParam;
+
+      fprintf(stderr, "End access FAIL: mBufferLevel: %u numBuffers: %u offset: %u CalcBufLevel: %u allowedToRead: %u\n", mBufferLevel, numBuffers, offset, (mWriteOffset - mReadOffset) % (mNumBuffers + 1), reader->allowedToRead);
     }
     else
     {
-      RingBufferReader *reader = findReader(pid);
-      if (reader == nullptr)
-      {
-        result = eIasRingBuffInvalidParam;
-      }
-      else if ((reader->offset + numBuffers) > mNumBuffers)
-      {
-        result = eIasRingBuffInvalidParam;
-      }
-      else
-      {
-        reader->offset += numBuffers;
-        aggregateReaderOffset();
+      reader->allowedToRead = 0;
+      reader->offset += numBuffers;
+      aggregateReaderOffset();
 
-        if (mBufferLevel <= mWriteWaitLevel)
-        {
-          mCondWrite.broadcast();
-        }
-
-        updateReaderAccess(reader);
-
-        fprintf(stderr, "End Read access(%d). numBuffers: %u offset: %u reader->offset: %u \n", pid, numBuffers, offset, reader->offset);
+      if (mBufferLevel <= mWriteWaitLevel)
+      {
+        mCondWrite.broadcast();
       }
+
+      updateReaderAccess(reader);
+
+      fprintf(stderr, "End Read access(%d). numBuffers: %u offset: %u reader->offset: %u \n", pid, numBuffers, offset, reader->offset);
     }
   }
   else
   {
     if (mWriteInProgress)
     {
-      if ((mBufferLevel + numBuffers) > mNumBuffers)
+      if (numBuffers > mAllowedToWrite)
       {
         result = eIasRingBuffInvalidParam;
       }
       else
       {
+        mAllowedToWrite = 0;
+
         IasLockGuard lock(&mMutex);
         if ((mWriteOffset + numBuffers) == mNumBuffers)
         {
@@ -430,6 +432,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::removeReader(pid_t pid)
         mReaders[i].pid = 0;
         mReaders[i].offset = 0;
         mReaders[i].lastAccess = 0;
+        mReaders[i].allowedToRead = 0;
         result = eIasRingBuffOk;
       }
     }
@@ -559,6 +562,7 @@ void IasAvbVideoRingBufferShm::purgeUnresponsiveReaders()
         mReaders[i].pid = 0;
         mReaders[i].offset = 0;
         mReaders[i].lastAccess = 0;
+        mReaders[i].allowedToRead = 0;
       }
     }
   }

@@ -234,6 +234,7 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
     struct RingBufferReader {
         pid_t pid;
         uint32_t offset;
+        uint32_t allowedToRead;
         std::atomic<uint64_t> lastAccess;
     };
 
@@ -327,6 +328,7 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
     IasAvbVideoCondVar                    mCondWrite;            //!< conditional variable for write access
     uint32_t                              mReadWaitLevel;        //!< buffer level that must be reached before a signal is sent
     uint32_t                              mWriteWaitLevel;       //!< buffer level that must be reached before a signal is sent
+    uint32_t                              mAllowedToWrite;       //!< how many buffers (packets) were allowed to writer on last beginAccess
 
     IasIntProcMutex                       mMutexReaders;                              //!< Protects access to mReaders array
     RingBufferReader                      mReaders[cIasVideoRingBufferShmMaxReaders]; //!< List of active readers
