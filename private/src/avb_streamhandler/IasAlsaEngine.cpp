@@ -343,6 +343,9 @@ IasAvbProcessingResult IasAlsaEngine::createAlsaStream(IasAvbStreamDirection dir
           (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cAlsaBaseFreq, baseFreq);
           (void) IasAvbStreamHandlerEnvironment::getConfigValue(IasRegKeys::cAlsaBasePeriod, basePeriod);
 
+          newAlsaVirtualDevStream->getDiagnostics()->setBasePeriod(basePeriod);
+          newAlsaVirtualDevStream->getDiagnostics()->setBaseFreq(baseFreq);
+
           const uint64_t p = uint64_t(periodSize * uint64_t(baseFreq));
           const uint64_t q = uint64_t(basePeriod * sampleFrequency);
 

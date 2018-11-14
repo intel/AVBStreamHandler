@@ -25,6 +25,8 @@ const std::string avbConfigPath = "pluginias-media_transport-avb_configuration_r
 namespace IasMediaTransportAvb
 {
 
+char avbArgs[1024];
+
 class IasTestAvbMain : public ::testing::Test
 {
 protected:
@@ -46,19 +48,19 @@ protected:
 
   std::string mCmdline;
 
-  inline void startStreamHandler(const char* cmdLine)
+  inline void startStreamHandler(const char* cmdArg)
   {
-    mCmdline.assign(avbStreamPath);
-    mCmdline.append(cmdLine);
-
-    std::cout << "IasTestAvbMain::startStreamHandler cmd: " << mCmdline.c_str() << std::endl;
+    mCmdline.insert(avbStreamPath.length(), cmdArg);
     system(mCmdline.c_str());
     sleep(1);
+    if(strlen(cmdArg) > 0) {
+            mCmdline.erase(avbStreamPath.length(), (strlen(cmdArg)));
+
+        }
   }
 
   inline void stopStreamHandler()
   {
-    mCmdline.clear();
     system("killall avb_streamhandler_demo");
     std::cout << "IasTestAvbMain::stopStreamHandler" << std::endl;
     sleep(1);
@@ -67,21 +69,35 @@ protected:
 
 TEST_F(IasTestAvbMain, PassParamList)
 {
-  char cmdline[1024];
 
   ASSERT_TRUE(IasSpringVilleInfo::fetchData());
 
-  ::snprintf(cmdline, 1024," --background -c -s %s setup -t Fedora -p UnitTests --ifname %s",
+  ::snprintf(avbArgs, 1024," --background -c -s %s setup -t Fedora -p UnitTests --ifname %s",
              avbConfigPath.c_str(),
              IasSpringVilleInfo::getInterfaceName()
              );
 
-  startStreamHandler(cmdline);
+  mCmdline.assign(avbStreamPath);
+  mCmdline.append(avbArgs);
+
+
+  startStreamHandler("");
   system("killall -s SIGUSR1 avb_streamhandler_demo");
   system("killall -s SIGUSR1 avb_streamhandler_demo");
   sleep(1);
   system("killall -s SIGUSR2 avb_streamhandler_demo");
   system("killall -s SIGUSR2 avb_streamhandler_demo");
+
+  startStreamHandler(" --help");
+  stopStreamHandler();
+
+  startStreamHandler(" -v -q");
+  stopStreamHandler();
+
+  startStreamHandler(" -vv -q");
+  stopStreamHandler();
+
+  startStreamHandler(" -vv -v -q");
   stopStreamHandler();
 
   startStreamHandler(" -c -q -vov --clockdriver /lib/modules --clockdriver xxx --help -x");
@@ -90,19 +106,7 @@ TEST_F(IasTestAvbMain, PassParamList)
   startStreamHandler(" --nosetup nonSetup");
   stopStreamHandler();
 
-  startStreamHandler(" --background");
-  stopStreamHandler();
-
-  startStreamHandler(" -vv -v -q");
-  stopStreamHandler();
-
-  startStreamHandler(" --help");
-  stopStreamHandler();
-
-  std::string noIPC(" --noipc");
-  std::string sCmdline(cmdline);
-  sCmdline.insert(0, noIPC);
-  startStreamHandler(sCmdline.c_str());
+  startStreamHandler(" --noipc");
   system("killall -s SIGUSR1 avb_streamhandler_demo");
   sleep(1);
   system("killall -s SIGUSR2 avb_streamhandler_demo");
@@ -148,12 +152,6 @@ TEST_F(IasTestAvbMain, PassParamList)
   stopStreamHandler();
 
   startStreamHandler(" -I testInstance");
-  stopStreamHandler();
-
-  startStreamHandler(" -I");
-  stopStreamHandler();
-
-  startStreamHandler(" -s");
   stopStreamHandler();
 
 }
