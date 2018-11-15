@@ -256,3 +256,8 @@ Restart=always
 ```
  - sudo journalctl -fu avb.service | grep watchdog
 ```
+
+## Security issues
+
+Please report any security issues with this code to https://01.org/security
+
