@@ -1047,6 +1047,12 @@ void IasAvbVideoStream::readFromAvbPacket(const void* const packet, const size_t
         }
       }
     }
+
+    if (IasAvbStreamState::eIasAvbStreamNoData == newState)
+    {
+      // Nothing to send, but writting null to localstram notes that we're still alive
+      mLocalStream->writeLocalVideoBuffer(NULL, NULL);
+    }
   }
 
   mLock.unlock();

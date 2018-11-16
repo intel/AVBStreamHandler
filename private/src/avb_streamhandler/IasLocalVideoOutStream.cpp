@@ -183,10 +183,39 @@ IasAvbProcessingResult IasLocalVideoOutStream::writeLocalVideoBuffer(IasLocalVid
       result = pushPayload(packetMpegTs);
     }
   }
+  else
+  {
+    result = pushNull();
+  }
 
   return result;
 }
 
+IasAvbProcessingResult IasLocalVideoOutStream::pushNull()
+{
+  IasAvbProcessingResult result = eIasAvbProcOK;
+
+  IasAvbVideoRingBuffer *ringBuffer = mShmConnection.getRingBuffer();
+  if (nullptr == ringBuffer)
+  {
+    DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, "Could not get IPC ring buffer");
+    result = eIasAvbProcErr;
+  }
+  else
+  {
+    uint32_t offset = 0u;
+    uint32_t numPackets = 0u; // We won't be sending any packets
+    void *basePtr = nullptr;
+
+    // We don't really care about errors here, no packet is being sent, after
+    // all. These are just to keep writer last access time on the ringBuffer
+    // updated, so readers can check reader is still alive
+    ringBuffer->beginAccess(eIasRingBufferAccessWrite, getpid(), &basePtr, &offset, &numPackets);
+    ringBuffer->endAccess(eIasRingBufferAccessWrite, getpid(), 0, 0);
+  }
+
+  return result;
+}
 
 IasAvbProcessingResult IasLocalVideoOutStream::pushPayload(PacketH264 const & packet)
 {

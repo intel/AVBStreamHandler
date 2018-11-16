@@ -89,6 +89,17 @@ class IasLocalVideoOutStream : public IasLocalVideoStream
     IasAvbProcessingResult pushPayload(PacketMpegTS const & packet);
 
     /*!
+     * @brief Sends null packet to local ring buffer
+     *
+     * This will allow client to track liveliness of the server, as
+     * local ring buffer keeps the last time of access made by the
+     * server
+     *
+     * @returns    eIasAvbProcOK on success, otherwise an error code.
+     */
+    IasAvbProcessingResult pushNull();
+
+    /*!
      * @brief Reset video buffer to initial state
      */
     IasAvbProcessingResult resetBuffers();

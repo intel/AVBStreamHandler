@@ -201,6 +201,18 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
      */
     IasVideoRingBufferResult removeReader(pid_t pid);
 
+    /*!
+     * @brief Time of writer last access to the ring buffer.
+     *
+     * Readers can check the liveliness of writer by ensuring this time doesn't
+     * get too distant from now.
+     *
+     * @returns Last access time in nanoseconds.
+     */
+    uint64_t getWriterLastAccess() {
+        return mWriterLastAccess;
+    }
+
   private:
 
     /* Struct to keep track of reader register to read on this RingBuffer */
@@ -280,6 +292,11 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
       return nullptr;
     };
 
+    /*!
+     * @brief updates lastAccess for writer, so it's possible to track writer death by timeout
+     */
+    void updateWriterAccess();
+
     /* As this class lives on shared memory, it can *not* save anything that
      * is related to any process, like the log context. It needs to get it every
      * time, so to get the right log context for the calling process */
@@ -309,6 +326,7 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBufferShm
     uint32_t                              mReadWaitLevel;        //!< buffer level that must be reached before a signal is sent
     uint32_t                              mWriteWaitLevel;       //!< buffer level that must be reached before a signal is sent
     uint32_t                              mAllowedToWrite;       //!< how many buffers (packets) were allowed to writer on last beginAccess
+    uint64_t                              mWriterLastAccess;     //!< writer last access time
 
     IasIntProcMutex                       mMutexReaders;                              //!< Protects access to mReaders array
     RingBufferReader                      mReaders[cIasVideoRingBufferShmMaxReaders]; //!< List of active readers
