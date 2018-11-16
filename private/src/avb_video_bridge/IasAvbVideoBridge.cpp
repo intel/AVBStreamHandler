@@ -138,6 +138,15 @@ IAS_DSO_PUBLIC ias_avbvideobridge_result ias_avbvideobridge_register_MpegTS_cb(i
   return res;
 }
 
+IAS_DSO_PUBLIC uint64_t ias_avbvideobridge_last_receiver_access(ias_avbvideobridge_receiver* inst)
+{
+  if (NULL != inst)
+  {
+    return reinterpret_cast<IasAvbVideoReceiver*>(inst)->getLastStreamWriteAccess();
+  }
+
+  return 0;
+}
 
 #if defined( __cplusplus )
 }

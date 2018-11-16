@@ -204,6 +204,15 @@ ias_avbvideobridge_result ias_avbvideobridge_register_H264_cb(ias_avbvideobridge
  */
 ias_avbvideobridge_result ias_avbvideobridge_register_MpegTS_cb(ias_avbvideobridge_receiver* inst, ias_avbvideobridge_receive_MpegTS_cb cb, void* user_ptr);
 
+/**
+ * @brief Last access time of writer end on the bridge.
+ *
+ * Readers can check the liveliness of writer by ensuring this time doesn't
+ * get too distant from now.
+ *
+ * @returns Last access time in nanoseconds.
+ */
+uint64_t ias_avbvideobridge_last_receiver_access(ias_avbvideobridge_receiver* inst);
 
 #if defined( __cplusplus )
 }

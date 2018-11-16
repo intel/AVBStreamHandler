@@ -815,4 +815,33 @@ TEST_F(IasTestVideoRingBufferShm, purgeUnresponsiveReaders)
   EXPECT_EQ(reader2->pid, 2);
 }
 
+TEST_F(IasTestVideoRingBufferShm, updateWriterAccess)
+{
+  mRingBuffer.mWriterLastAccess = 0;
+
+  mRingBuffer.updateWriterAccess();
+
+  EXPECT_NE(mRingBuffer.mWriterLastAccess, 0);
+}
+
+TEST_F(IasTestVideoRingBufferShm, updateWriterAccessUse)
+{
+  // This test checks if methods that should update mWriterLastAccess
+  // do that
+
+  uint32_t offsetReader, numBuffersReader, offsetWriter, numBuffersWriter = 300;
+
+  // begin access is one
+  mRingBuffer.mWriterLastAccess = 0;
+  IasVideoRingBufferResult result = mRingBuffer.beginAccess(eIasRingBufferAccessWrite, 0, &offsetWriter, &numBuffersWriter);
+  ASSERT_EQ(result, eIasRingBuffOk);
+  EXPECT_NE(mRingBuffer.mWriterLastAccess, 0);
+
+  // end access the other
+  mRingBuffer.mWriterLastAccess = 0;
+  result = mRingBuffer.endAccess(eIasRingBufferAccessWrite, 0, offsetWriter, numBuffersWriter);
+  ASSERT_EQ(result, eIasRingBuffOk);
+  EXPECT_NE(mRingBuffer.mWriterLastAccess, 0);
+}
+
 }
