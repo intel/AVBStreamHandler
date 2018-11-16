@@ -309,6 +309,19 @@ IasVideoRingBufferResult IasAvbVideoRingBuffer::removeReader(pid_t pid)
   return eIasRingBuffNotAllowed;
 }
 
+uint64_t IasAvbVideoRingBuffer::getWriterLastAccess()
+{
+  if (nullptr == mRingBufShm)
+  {
+    AVB_ASSERT(false);
+  }
+  else if (mIsShm)
+  {
+    return mRingBufShm->getWriterLastAccess();
+  }
+
+  return 0;
+}
 } // namespace IasMediaTransportAvb
 
 

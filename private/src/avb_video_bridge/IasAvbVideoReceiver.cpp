@@ -298,6 +298,13 @@ ias_avbvideobridge_result IasAvbVideoReceiver::setCallback(ias_avbvideobridge_re
   return res;
 }
 
+uint64_t IasAvbVideoReceiver::getLastStreamWriteAccess()
+{
+  AVB_ASSERT(nullptr != mRingBuffer); // Worker thread is started after successful connection to ring buffer
+
+  return mRingBuffer->getWriterLastAccess();
+}
+
 } // namespace IasMediaTransportAvb
 
 
