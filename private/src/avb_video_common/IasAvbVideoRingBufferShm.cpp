@@ -51,6 +51,7 @@ IasAvbVideoRingBufferShm::IasAvbVideoRingBufferShm()
   , mReadWaitLevel(0)
   , mWriteWaitLevel(0)
   , mAllowedToWrite(0)
+  , mWriterLastAccess(0)
   , mMutexReaders()
   , mReaders{}
 {
@@ -191,6 +192,8 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::beginAccess(IasRingBufferAcce
 
       mAllowedToWrite = *numBuffers;
 
+      updateWriterAccess();
+
       DLT_LOG_CXX(getLogContext(), DLT_LOG_DEBUG, LOG_PREFIX, "Begin write access (", pid, ") *numBuffers:", *numBuffers, "*offset:", *offset, "mBufferLevel:", mBufferLevel);
     }
   }
@@ -270,6 +273,7 @@ IasVideoRingBufferResult IasAvbVideoRingBufferShm::endAccess(IasRingBufferAccess
           mCondRead.broadcast();
         }
 
+        updateWriterAccess();
         purgeUnresponsiveReaders();
       }
     }
@@ -510,6 +514,15 @@ void IasAvbVideoRingBufferShm::updateReaderAccess(RingBufferReader *reader)
   clock_gettime(CLOCK_MONOTONIC, &ts);
 
   reader->lastAccess = ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+}
+
+void IasAvbVideoRingBufferShm::updateWriterAccess()
+{
+  struct timespec ts;
+
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+
+  mWriterLastAccess = ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
 }
 
 void IasAvbVideoRingBufferShm::purgeUnresponsiveReaders()

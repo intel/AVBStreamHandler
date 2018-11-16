@@ -75,6 +75,16 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoReceiver
      */
     ias_avbvideobridge_result setCallback(ias_avbvideobridge_receive_MpegTS_cb cb, void* userPtr);
 
+    /*!
+     * @brief Time of writer last access time to stream.
+     *
+     * Readers can check the liveliness of writer by ensuring this time doesn't
+     * get too distant from now.
+     *
+     * @returns Last access time in nanoseconds.
+     */
+    uint64_t getLastStreamWriteAccess();
+
     // currently not used
     uint32_t getInstCounter() { return uint32_t(mNumberInstances); }
 

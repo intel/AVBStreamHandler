@@ -226,6 +226,16 @@ class __attribute__ ((visibility ("default"))) IasAvbVideoRingBuffer
      */
     IasVideoRingBufferResult removeReader(pid_t pid);
 
+    /*!
+     * @brief Time of writer last access to the ring buffer.
+     *
+     * Readers can check the liveliness of writer by ensuring this time doesn't
+     * get too distant from now.
+     *
+     * @returns Last access time in nanoseconds.
+     */
+    uint64_t getWriterLastAccess();
+
   private:
     /*!
      *  @brief Copy constructor, private unimplemented to prevent misuse.
