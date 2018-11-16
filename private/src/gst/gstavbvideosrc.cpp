@@ -214,6 +214,18 @@ gst_avbvideosrc_create(GstPushSrc * src, GstBuffer ** buf)
 
     do {
         *buf = (GstBuffer *)g_async_queue_timeout_pop(avbvideosrc->queue, 100000);
+
+        /* If nothing is coming from the other side of the bridge, and the other
+         * side is not updating this time, maybe it died... */
+        if (*buf == NULL) {
+            // The `/ 1000` is so that we have writerTime in microseconds, to compare with glib time
+            guint64 writerTime = ias_avbvideobridge_last_receiver_access(avbvideosrc->receiver) / 1000;
+
+            if ((g_get_monotonic_time() - writerTime) > (2 * G_USEC_PER_SEC)) {
+                GST_ERROR_OBJECT(avbvideosrc, "Bridge appears down, more than two seconds without updates");
+                return GST_FLOW_ERROR;
+            }
+        }
     } while (*buf == NULL && !avbvideosrc->done);
 
     return GST_FLOW_OK;
