@@ -18,7 +18,7 @@ make && sudo make install
 cd $ROOT_DIR
 git clone git://git.alsa-project.org/alsa-lib.git
 cd alsa-lib
-git checkout v1.1.6
+git checkout v1.1.7
 autoreconf -i
 ./configure --with-pythonlibs="-lpthread -lm -ldl -lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
 make && sudo make install
