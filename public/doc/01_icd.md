@@ -1275,6 +1275,47 @@ When starting the Stream Handler via *systemd* these variables are set by the se
 ![Figure: Sequence to create a transmit stream](./images/MSC_Avb_Control_Establish_Streams.png "Creating a network stream associated with a local source")
 ![Figure: Sequence to remove a transmit stream](./images/MSC_Avb_Control_Remove_Stream.png "Removing a network stream")
 
+#################################################################################
+@section watchdog Systemd Watchdog
+#################################################################################
+
+AVB streamhandler watchdog is built as a static library. Currently, 3
+AVB streamhandler threads - Transmit sequencer, Alsa Worker and Receive
+engine,  register themselves with the watchdog manager. These can be
+enabled by passing "-k watchdog.enable=1" to avb_streamhandler_demo.
+
+Since we're relying on Systemd watchdog to reset AVB streamhandler
+if any of the three threads stop resetting the watchdog timer, Systemd
+will reset the AVB Stream handler service, so AVB streamhandler needs
+to be run as a Systemd service. A sample Systemd service file is
+described below.
+
+* Systemd service file. Place this at /etc/systemd/system/avb.service
+```
+[Unit]
+Description=AVBSH for watchdog testing
+
+[Service]
+Type=simple
+Environment="LD_LIBRARY_PATH=$AVB_DEPS/lib/"
+ExecStart=<path to your AVB SH build dir>/avb_streamhandler_demo -c -v -s
+pluginias-media_transport-avb_configuration_reference.so setup --target
+GrMrb -p MRB_Slave_Audio -n enp4s0 -k watchdog.enable=1
+WatchdogSec=<timeout in seconds, so 30 for 30 seconds>
+Restart=always
+```
+
+* Start/stop or check the status of the AVB streamhandler service with:
+```
+ - sudo systemctl start avb.service
+ - sudo systemctl status avb.service
+ - sudo systemctl stop avb.service
+```
+
+* To view watchdog specific logs:
+```
+ - sudo journalctl -fu avb.service | grep watchdog
+```
 
 #################################################################################
 @section faq FAQ
