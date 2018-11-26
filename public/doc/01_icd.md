@@ -1318,6 +1318,14 @@ Restart=always
 ```
 
 #################################################################################
+@section video_multi_client Video multi-client
+#################################################################################
+
+For video streams, on the listener side, AVB Stream Handler creates a bridge - basically, some shared memory that can be accessed by other process - to which applications that will consume the stream will connect to. Note that more than one application can connect to the same video stream. This allows different consumers for the stream - like an application that shows the video and another that records it.
+
+This feature is transparent to applications using the bridge. However, current implementation has one limitation: as application PID is used to track what reader application has read from the stream, one process can not have multiple threads connecting to the same stream. This should not be a problem, as this feature is usually intended for multiple processes connecting to the same stream.
+
+#################################################################################
 @section faq FAQ
 #################################################################################
 FAQ
