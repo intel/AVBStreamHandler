@@ -179,7 +179,7 @@ IasWatchdogResult IasWatchdogInterface::reset()
     {
       std::lock_guard<std::mutex> mutexGuard(mDueResetTimeMutex);
 
-      mDueResetTime =  currentTime + (mTimeout * 1000000); // 1 ms change to 1000000 ns for monotonic raw
+      mDueResetTime =  currentTime + (mTimeout * 1000000ULL); // 1 ms change to 1000000 ns for monotonic raw
       DLT_LOG_CXX(
       mDltContext,
       DLT_LOG_VERBOSE,
