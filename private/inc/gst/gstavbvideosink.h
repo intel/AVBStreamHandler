@@ -27,6 +27,7 @@ struct _GstAvbVideoSink
 
     struct ias_avbvideobridge_sender *sender;
     gchar *stream_name;
+    gboolean is_mpegts;
 };
 
 struct _GstAvbVideoSinkClass
