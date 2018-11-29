@@ -30,6 +30,7 @@ static void gst_avbvideosink_get_property(GObject *object, guint prop_id,
         GValue *value, GParamSpec *pspec);
 static GstStateChangeReturn gst_avbvideosink_change_state(GstElement *element,
         GstStateChange transition);
+static gboolean gst_avbvideosink_event(GstBaseSink *sink, GstEvent *event);
 
 enum
 {
@@ -45,7 +46,11 @@ GST_STATIC_PAD_TEMPLATE("sink",
         GST_PAD_ALWAYS,
         GST_STATIC_CAPS(
             "video/mpegts,"
-            "  packetsize = (int) " G_STRINGIFY(MPEG_TS_PACKET_SIZE)
+            "  packetsize = (int) " G_STRINGIFY(MPEG_TS_PACKET_SIZE) ";"
+            "application/x-rtp,"
+            "  media = (string) \"video\", "
+            "  clock-rate = (int) 90000,"
+            "  encoding-name = (string) \"H264\""
             )
         );
 
@@ -79,6 +84,7 @@ gst_avbvideosink_class_init(GstAvbVideoSinkClass *klass)
     gstelement_class->change_state = gst_avbvideosink_change_state;
 
     base_sink_class->render = GST_DEBUG_FUNCPTR(gst_avbvideosink_render);
+    base_sink_class->event = GST_DEBUG_FUNCPTR(gst_avbvideosink_event);
     // TODO render_list, if available, is used when using mpegtsmux before
     // avbvideosink in the pipeline.
     //  base_sink_class->render_list = GST_DEBUG_FUNCPTR(gst_avbvideosink_render_list);
@@ -149,6 +155,7 @@ static void
 gst_avbvideosink_init(GstAvbVideoSink *avbvideosink)
 {
     avbvideosink->stream_name = strdup(DEFAULT_STREAM_NAME);
+    avbvideosink->is_mpegts = TRUE;
 }
 
 void
@@ -162,18 +169,64 @@ gst_avbvideosink_finalize(GObject * object)
     G_OBJECT_CLASS(gst_avbvideosink_parent_class)->finalize(object);
 }
 
+static gboolean gst_avbvideosink_event(GstBaseSink *sink, GstEvent *event)
+{
+    GstAvbVideoSink *avbvideosink = GST_AVBVIDEOSINK(sink);
+    gboolean ret = TRUE;
+
+    GST_DEBUG_OBJECT (avbvideosink, "Received event %s",
+                     gst_event_type_get_name (GST_EVENT_TYPE (event)));
+
+    switch (GST_EVENT_TYPE (event)) {
+        case GST_EVENT_CAPS:
+            {
+                GstCaps *caps;
+                GstStructure *video_format;
+
+                gst_event_parse_caps (event, &caps);
+
+                if (caps) {
+                    video_format = gst_caps_get_structure(caps, 0);
+                } else {
+                    GST_ERROR_OBJECT (avbvideosink, "Caps parsing failed");
+                    ret = FALSE;
+                    goto unref;
+                }
+
+                const gchar *vf_type = gst_structure_get_name(video_format);
+                if (strcmp (vf_type, "application/x-rtp") == 0)
+                    avbvideosink->is_mpegts = FALSE;
+                else if (strcmp (vf_type, "video/mpegts") == 0)
+                    avbvideosink->is_mpegts = TRUE;
+
+                GST_DEBUG_OBJECT (avbvideosink, "Using video-format %s",
+                             vf_type);
+            }
+            break;
+        default:
+            break;
+    }
+
+unref:
+    gst_event_unref (event);
+
+    return ret;
+}
+
 static GstFlowReturn
 gst_avbvideosink_render(GstBaseSink * sink, GstBuffer * buffer)
 {
     GstAvbVideoSink *avbvideosink = GST_AVBVIDEOSINK(sink);
     GstMapInfo map;
     ias_avbvideobridge_result r;
+    const char *pkt_type = avbvideosink->is_mpegts ? "MPEG-TS" : "RTP-H.264";
+
 
     gst_buffer_map(buffer, &map, GST_MAP_READ);
 
     gsize size = gst_buffer_get_size(buffer);
 
-    if (size != MPEG_TS_PACKET_SIZE) {
+    if (avbvideosink->is_mpegts && (size != MPEG_TS_PACKET_SIZE)) {
         // TODO avmux_mpegts doesn't generate 188-bytes packets, but any arbitrary number. It even breaks
         // a 188-bytes packet so that one call to gst_avbvideosink_render may receive the first part of the
         // bytes, and the next call receives the remaining bytes. So, these cases, where a muxer
@@ -187,11 +240,20 @@ gst_avbvideosink_render(GstBaseSink * sink, GstBuffer * buffer)
     }
 
     ias_avbvideobridge_buffer avb_buffer;
-    avb_buffer.size = MPEG_TS_PACKET_SIZE;
+    avb_buffer.size = size;
     avb_buffer.data = map.data;
-    r = ias_avbvideobridge_send_packet_MpegTs(avbvideosink->sender, false, &avb_buffer);
 
-    GST_DEBUG_OBJECT(avbvideosink, "Sent MPEG-TS packet to avb-sh: %d", r);
+    if (avbvideosink->is_mpegts)
+        r = ias_avbvideobridge_send_packet_MpegTs(avbvideosink->sender, false, &avb_buffer);
+    else
+        r = ias_avbvideobridge_send_packet_H264(avbvideosink->sender, &avb_buffer);
+
+    if (r != IAS_AVB_RES_OK) {
+        GST_ERROR_OBJECT(avbvideosink, "Failed to send %s packet [%d]", pkt_type, r);
+        return GST_FLOW_ERROR;
+    }
+
+    GST_DEBUG_OBJECT(avbvideosink, "Sent %s packet to avb-sh: %d", pkt_type, r);
 
     gst_buffer_unmap(buffer, &map);
 
