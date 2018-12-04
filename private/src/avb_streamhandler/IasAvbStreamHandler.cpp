@@ -435,7 +435,21 @@ IasAvbProcessingResult IasAvbStreamHandler::init( const std::string& configName,
         // TODO: Add a config option to receive user input to disable avb_watchdog at runtime.
         //       Otherwise, would not be able to start by executing the demo_app normally
         //       since WATCHDOG_USEC is set by systemctl.
-        if (mEnvironment->createWatchdog() != eIasAvbProcOK)
+        result = mEnvironment->createWatchdog();
+        if (result == eIasAvbProcInvalidParam)
+        {
+          uint64_t wd_en = 0;
+          DLT_LOG_CXX(*mLog, DLT_LOG_WARN, LOG_PREFIX,
+                      "WATCHDOG_USEC is not configured!");
+
+          mEnvironment->getConfigValue(IasRegKeys::cUseWatchdog, wd_en);
+          if (wd_en)
+              DLT_LOG_CXX(*mLog, DLT_LOG_WARN, LOG_PREFIX,
+                          "Watchdog won't work. Please configure WATCHDOG_USEC.");
+
+          result = eIasAvbProcOK;
+        }
+        else if (result != eIasAvbProcOK)
         {
           DLT_LOG_CXX(*mLog, DLT_LOG_ERROR, LOG_PREFIX, " Init of watchdog failed");
           result = eIasAvbProcInitializationFailed;

@@ -1204,13 +1204,8 @@ IasAvbProcessingResult IasAvbStreamHandlerEnvironment::createWatchdog()
     }
     else
     {
-      /*
-       * no watchdog configuration found in env 'WATCHDOG_USEC'.
-       * Treat this as a normal use case since users might now want to use either systemd or
-       * systemd's watchdog feature.
-       */
       mUseWatchdog = false;
-      ret = eIasAvbProcOK; // success
+      ret = eIasAvbProcInvalidParam;
     }
 
     if (mUseWatchdog)
@@ -1261,7 +1256,7 @@ IasAvbProcessingResult IasAvbStreamHandlerEnvironment::createWatchdog()
     }
   }
 
-  if (eIasAvbProcOK != ret)
+  if (eIasAvbProcOK != ret && eIasAvbProcInvalidParam != ret)
   {
     destroyWatchdog();
   }

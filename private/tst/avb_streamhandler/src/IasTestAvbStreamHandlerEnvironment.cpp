@@ -439,7 +439,7 @@ TEST_F(IasTestAvbStreamHandlerEnvironment, create_destroyWatchdog)
 {
   ASSERT_TRUE(mIasAvbStreamHandlerEnvironment != NULL);
 
-  ASSERT_EQ(eIasAvbProcInitializationFailed, mIasAvbStreamHandlerEnvironment->createWatchdog());
+  ASSERT_EQ(eIasAvbProcInvalidParam, mIasAvbStreamHandlerEnvironment->createWatchdog());
 
   std::string wdEnvVar("WATCHDOG_USEC");
   std::string wdTimeoutUSec("100000");
