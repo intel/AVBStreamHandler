@@ -34,6 +34,9 @@ static void gst_avbvideosrc_finalize(GObject * object);
 static GstFlowReturn gst_avbvideosrc_create(GstPushSrc * src, GstBuffer ** buf);
 
 static void mpegts_callback(ias_avbvideobridge_receiver *receiver, bool sph, ias_avbvideobridge_buffer const * packet, void *user_ptr);
+static void h264_callback(ias_avbvideobridge_receiver *receiver,
+                          ias_avbvideobridge_buffer const * packet,
+                          void *user_ptr);
 
 static void gst_avbvideosrc_set_property(GObject *object, guint prop_id,
         const GValue *value, GParamSpec *pspec);
@@ -45,8 +48,32 @@ static GstStateChangeReturn gst_avbvideosrc_change_state(GstElement *element,
 enum
 {
     PROP_0,
-    PROP_STREAM_NAME
+    PROP_STREAM_NAME,
+    PROP_STREAM_TYPE
 };
+
+enum
+{
+    TYPE_MPEG_TS,
+    TYPE_RTP_H264
+};
+
+#define GST_TYPE_AVBVIDEO_STREAM (gst_avb_video_src_get_stream_type ())
+static GType
+gst_avb_video_src_get_stream_type (void)
+{
+    static GType avb_video_src_stream_type = 0;
+    static const GEnumValue stream_type[] = {
+        {TYPE_MPEG_TS, "Represents an Mpeg-TS stream", "mpegts"},
+        {TYPE_RTP_H264, "Represents an RTP encapsulated H.264 stream", "rtp-h264"},
+        {0, NULL, NULL}
+    };
+
+    if (!avb_video_src_stream_type)
+        avb_video_src_stream_type = g_enum_register_static ("GstAvbvideosrcStream", stream_type);
+
+    return avb_video_src_stream_type;
+}
 
 /* pad templates */
 
@@ -57,7 +84,11 @@ GST_STATIC_PAD_TEMPLATE("src",
         GST_STATIC_CAPS(
             "video/mpegts,"
             "  packetsize = (int) " G_STRINGIFY(MPEG_TS_PACKET_SIZE) ","
-            "  systemstream = (boolean) true"
+            "  systemstream = (boolean) true;"
+            "application/x-rtp,"
+            "  media = (string) \"video\", "
+            "  clock-rate = (int) 90000, "
+            "  encoding-name = (string) \"H264\""
             )
         );
 
@@ -97,6 +128,11 @@ gst_avbvideosrc_class_init(GstAvbVideoSrcClass * klass)
             g_param_spec_string("stream-name", "Stream name",
                 "Name of the stream", DEFAULT_STREAM_NAME,
                 (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+
+    g_object_class_install_property(gobject_class, PROP_STREAM_TYPE,
+            g_param_spec_enum("stream-type", "Stream type",
+                "Format of the video stream", GST_TYPE_AVBVIDEO_STREAM, TYPE_MPEG_TS,
+                (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
 }
 
 static void gst_avbvideosrc_set_property(GObject *object, guint prop_id,
@@ -108,7 +144,12 @@ static void gst_avbvideosrc_set_property(GObject *object, guint prop_id,
     if (prop_id == PROP_STREAM_NAME) {
         free(avbvideosrc->stream_name);
         avbvideosrc->stream_name = g_value_dup_string(value);
+
         GST_DEBUG_OBJECT(avbvideosrc, "Set stream name to [%s]", avbvideosrc->stream_name);
+    } else if (prop_id == PROP_STREAM_TYPE) {
+        avbvideosrc->stream_type = g_value_get_enum(value);
+
+        GST_DEBUG_OBJECT(avbvideosrc, "Set stream type to [%u]", avbvideosrc->stream_type);
     }
 }
 
@@ -119,6 +160,8 @@ static void gst_avbvideosrc_get_property(GObject *object, guint prop_id,
 
     if (prop_id == PROP_STREAM_NAME) {
         g_value_set_string(value, avbvideosrc->stream_name);
+    } else if (prop_id == PROP_STREAM_TYPE) {
+        g_value_set_enum(value, avbvideosrc->stream_type);
     } else {
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
     }
@@ -129,21 +172,50 @@ gst_avbvideosrc_change_state(GstElement *element, GstStateChange transition)
 {
     GstAvbVideoSrc *avbvideosrc = GST_AVBVIDEOSRC(element);
     GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
+    GstCaps *caps_event = NULL;
 
     if (transition == GST_STATE_CHANGE_NULL_TO_READY) {
         ias_avbvideobridge_result r;
 
-        avbvideosrc->receiver = ias_avbvideobridge_create_receiver("MpegTs_Receiver",
+        if (avbvideosrc->stream_type == TYPE_MPEG_TS) {
+            caps_event = gst_caps_new_simple("video/mpegts",
+                                             "packetsize", G_TYPE_INT, MPEG_TS_PACKET_SIZE,
+                                             "systemstream", G_TYPE_BOOLEAN, TRUE,
+                                             NULL);
+        } else if (avbvideosrc->stream_type == TYPE_RTP_H264) {
+            caps_event = gst_caps_new_simple("application/x-rtp",
+                                             "media", G_TYPE_STRING, "video",
+                                             "clock-rate", G_TYPE_INT, 90000,
+                                             "encoding-name", G_TYPE_STRING, "H264",
+                                             NULL);
+        } else {
+            GST_ERROR_OBJECT(avbvideosrc, "Invalid stream type");
+            return GST_STATE_CHANGE_FAILURE;
+        }
+
+        if (!caps_event && !(gst_base_src_set_caps(GST_BASE_SRC(avbvideosrc), caps_event))) {
+            GST_ERROR_OBJECT(avbvideosrc, "Failed to set caps on the source pad");
+            return GST_STATE_CHANGE_FAILURE;
+        }
+
+        avbvideosrc->receiver = ias_avbvideobridge_create_receiver("receiver",
                 avbvideosrc->stream_name);
+
         if (!avbvideosrc->receiver) {
             GST_ERROR_OBJECT(avbvideosrc, "Could not create avbvideobridge receiver [%s]",
                     avbvideosrc->stream_name);
             return GST_STATE_CHANGE_FAILURE;
         }
-        r = ias_avbvideobridge_register_MpegTS_cb(avbvideosrc->receiver,
-                &mpegts_callback, avbvideosrc);
+
+        if (avbvideosrc->stream_type == TYPE_MPEG_TS)
+            r = ias_avbvideobridge_register_MpegTS_cb(avbvideosrc->receiver,
+                    &mpegts_callback, avbvideosrc);
+        else
+            r = ias_avbvideobridge_register_H264_cb(avbvideosrc->receiver,
+                    &h264_callback, avbvideosrc);
+
         if (r != IAS_AVB_RES_OK) {
-            GST_ERROR_OBJECT(avbvideosrc, "Could not register mpegts callback [%d]", r);
+            GST_ERROR_OBJECT(avbvideosrc, "Could not register receiver callback [%d]", r);
             ias_avbvideobridge_destroy_receiver(avbvideosrc->receiver);
             avbvideosrc->receiver = NULL;
             return GST_STATE_CHANGE_FAILURE;
@@ -188,6 +260,7 @@ gst_avbvideosrc_init(GstAvbVideoSrc *avbvideosrc)
 
     avbvideosrc->stream_name = strdup(DEFAULT_STREAM_NAME);
     avbvideosrc->done = FALSE;
+    avbvideosrc->stream_type = TYPE_MPEG_TS;
 }
 
 void
@@ -259,4 +332,21 @@ mpegts_callback(ias_avbvideobridge_receiver *receiver, bool sph, ias_avbvideobri
         gst_buffer_fill(buf, 0, data + j + offset, MPEG_TS_PACKET_SIZE);
         g_async_queue_push(avbvideosrc->queue, buf);
     }
+}
+
+static void
+h264_callback(ias_avbvideobridge_receiver *receiver, ias_avbvideobridge_buffer const * packet, void *user_ptr)
+{
+    GstAvbVideoSrc *avbvideosrc = GST_AVBVIDEOSRC(user_ptr);
+    GstBuffer *buf;
+
+    if (!receiver || !packet) {
+        GST_ERROR_OBJECT(avbvideosrc, "Invalid receiver/packet");
+        return;
+    }
+
+    GST_BASE_SRC_CLASS(gst_avbvideosrc_parent_class)->alloc(GST_BASE_SRC_CAST(avbvideosrc), -1,
+                       (guint)packet->size, &buf);
+    gst_buffer_fill(buf, 0, packet->data, packet->size);
+    g_async_queue_push(avbvideosrc->queue, buf);
 }
