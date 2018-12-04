@@ -33,6 +33,7 @@ struct _GstAvbVideoSrc
     GAsyncQueue *queue;
     gchar *stream_name;
     gboolean done;
+    guint stream_type;
 };
 
 struct _GstAvbVideoSrcClass
