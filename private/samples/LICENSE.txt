@@ -1,9 +1,8 @@
 The samples in this directory are derivatives of Muriel-Nguyen-Xuan-Brahms-rhapsody-opus79-1.ogg
 https://en.wikipedia.org/wiki/File:Muriel-Nguyen-Xuan-Brahms-rhapsody-opus79-1.ogg
-
-This file is licensed under the Creative Commons Attribution-Share Alike 4.0 International, 3.0 Unported, 2.5 Generic, 2.0 Generic and 1.0 Generic license.	
 Attribution: Muriel Nguyen Xuan and Stéphane Magnenat
 
+This file is licensed under the Creative Commons Attribution-Share Alike 4.0 International, 3.0 Unported, 2.5 Generic, 2.0 Generic and 1.0 Generic license.	
 
 Attribution-ShareAlike 4.0 International
 
