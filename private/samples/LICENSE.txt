@@ -1,5 +1,5 @@
-The samples in this directory are derivatives of Muriel-Nguyen-Xuan-Brahms-rhapsody-opus79-1.ogg
-https://en.wikipedia.org/wiki/File:Muriel-Nguyen-Xuan-Brahms-rhapsody-opus79-1.ogg
+The audio samples rhapsody-48k-16bit-BE.wav and rhapsody-48k-16bit-LE.wav are derivative works from
+Muriel-Nguyen-Xuan-Brahms-rhapsody-opus79-1.ogg - https://en.wikipedia.org/wiki/File:Muriel-Nguyen-Xuan-Brahms-rhapsody-opus79-1.ogg
 Attribution: Muriel Nguyen Xuan and Stéphane Magnenat
 
 This file is licensed under the Creative Commons Attribution-Share Alike 4.0 International, 3.0 Unported, 2.5 Generic, 2.0 Generic and 1.0 Generic license.	
