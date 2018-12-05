@@ -16,6 +16,7 @@ pkg_check_modules(DLT REQUIRED automotive-dlt-c++)
 add_subdirectory( deps/audio/common )
 
 string(REPLACE " -O3" " -O2" GPTP_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+string(REPLACE " -Werror" "" GPTP_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 #-----------------------------------------------------------
 # build igb_avb and gptp libraries and driver before searching for libraries
@@ -111,7 +112,7 @@ endif()
 install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/deps/gptp/linux/build/obj/daemon_cl DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh ${CMAKE_INSTALL_FULL_BINDIR}/daemon_cl)")
 
-set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR}/alsa-lib)
+set(INSTALL_LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR}/alsa-lib)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/public/res/51-smartx.conf.in ${CMAKE_CURRENT_SOURCE_DIR}/public/res/51-smartx.conf @ONLY)
 
 if(ASOUND_VERSION VERSION_LESS 1.1.7)
