@@ -15,7 +15,7 @@ pkg_check_modules(DLT REQUIRED automotive-dlt-c++)
 
 add_subdirectory( deps/audio/common )
 
-string(REPLACE " -O3" " -O2" GPTP_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+string(APPEND GPTP_CXX_FLAGS " -fno-tree-vectorize")
 
 #-----------------------------------------------------------
 # build igb_avb and gptp libraries and driver before searching for libraries
@@ -34,7 +34,7 @@ execute_process( COMMAND make CXXFLAGS=${GPTP_CXX_FLAGS}
 # set release version for avb stream handler
 set( MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_MAJOR    1 )
 set( MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_MINOR    0 )
-set( MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_REVISION 4 )
+set( MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_REVISION 5 )
 
 set( MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_STRING ${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_MAJOR}.${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_MINOR}.${MEDIA_TRANSPORT_AVB_STREAMHANDLER_VERSION_REVISION})
 
