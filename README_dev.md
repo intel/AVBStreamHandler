@@ -97,7 +97,7 @@ $ sudo usermod -a -G ias_audio <username>
 - Restart the session.
 
 (for alsa lib v.1.1.6 or before)
-	$ cp deps/audio/common/public/res/50-smartx.conf /usr/share/alsa/conf.d/51-smartx.conf
+	$ cp deps/audio/common/public/res/50-smartx.conf /usr/share/alsa/alsa.conf.d/51-smartx.conf
 (for alsa lib v1.1.7 or later, conf location is fixed to /etc/alsa/conf.d/)
 	$ cp deps/audio/common/public/res/50-smartx.conf /etc/alsa/conf.d/51-smartx.conf
 
