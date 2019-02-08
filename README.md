@@ -122,7 +122,12 @@ $ sudo chgrp ias_avb /dev/igb_avb
 $ sudo chmod 660 /dev/ptp*
 $ sudo chgrp ias_avb /dev/ptp*
 
+# If the module igb_avb is loaded by default on boot, reinsert the module: #
+$ rmmod igb_avb
+$ sudo insmod /lib/modules/<kernel-ver>/kernel/drivers/staging/igb_avb/igb_avb.ko tx_size=1024
+
 # Start the DLT daemon (for logging and tracing) #
+
 
 $ dlt-daemon -d (to daemonize)
 
