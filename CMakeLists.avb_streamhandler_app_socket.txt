@@ -1,0 +1,56 @@
+#
+# Copyright (C) 2018 Intel Corporation. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#------------------------------------------------------------------
+# Build the Stream Handler demo executable
+#------------------------------------------------------------------
+
+add_executable( avb_streamhandler_app_socket
+                private/src/avb_streamhandler_app_socket/server.cpp
+                )
+add_executable( avb_streamhandler_client_app_socket
+                private/src/avb_streamhandler_app_socket/client.cpp
+                )
+
+# for version header
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+
+target_link_libraries( avb_streamhandler_app_socket ${DLT_LDFLAGS} )
+target_compile_options( avb_streamhandler_app_socket PUBLIC ${DLT_CFLAGS_OTHER})
+target_include_directories( avb_streamhandler_app_socket PUBLIC ${DLT_INCLUDE_DIRS})
+
+target_link_libraries( avb_streamhandler_client_app_socket ${DLT_LDFLAGS} )
+target_compile_options( avb_streamhandler_client_app_socket PUBLIC ${DLT_CFLAGS_OTHER})
+target_include_directories( avb_streamhandler_client_app_socket PUBLIC ${DLT_INCLUDE_DIRS})
+
+
+target_link_libraries( avb_streamhandler_app_socket ias-media_transport-avb_streamhandler )
+target_link_libraries( avb_streamhandler_app_socket boost_system )
+target_link_libraries( avb_streamhandler_app_socket boost_serialization )
+target_link_libraries( avb_streamhandler_app_socket ias-media_transport-avb_watchdog) 
+
+target_link_libraries( avb_streamhandler_client_app_socket ias-media_transport-avb_streamhandler )
+target_link_libraries( avb_streamhandler_client_app_socket boost_system )
+target_link_libraries( avb_streamhandler_client_app_socket boost_serialization )
+target_link_libraries( avb_streamhandler_client_app_socket ias-media_transport-avb_watchdog) 
+
+
+# set capabilities if building for Linux host execution
+if (${IAS_IS_HOST_BUILD})
+  add_custom_command(TARGET avb_streamhandler_app_socket POST_BUILD
+      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh $<TARGET_FILE:avb_streamhandler_app_socket>)
+  add_custom_command(TARGET avb_streamhandler_client_app_socket POST_BUILD
+      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh $<TARGET_FILE:avb_streamhandler_client_app_socket>)
+endif()
+
+
+install(TARGETS avb_streamhandler_app_socket DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh ${CMAKE_INSTALL_PREFIX}/bin/avb_streamhandler_app_socket)")
+
+install(TARGETS avb_streamhandler_client_app_socket DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/setcap.sh ${CMAKE_INSTALL_PREFIX}/bin/avb_streamhandler_client_app_socket)")
+
