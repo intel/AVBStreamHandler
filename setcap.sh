@@ -22,7 +22,7 @@ fi
 which setcap &> /dev/null
 if [ $? -eq 0 ]; then
 	echo "running setcap on PATH env var"
-	setcap cap_net_admin,cap_net_raw,cap_sys_nice+ep $1 && exit
+	setcap cap_net_admin,cap_net_raw,cap_net_bind_service,cap_sys_nice+ep $1 && exit
 	echo "Failed to set cap"
 fi
 
