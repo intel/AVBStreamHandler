@@ -88,7 +88,6 @@ include( CMakeLists.avb_video_bridge.txt )
 include( CMakeLists.avb_video_debug_app.txt )
 include( CMakeLists.avb_watchdog.txt )
 include( CMakeLists.gst_avb_video_plugin.txt )
-include( CMakeLists.avb_streamhandler_app_socket.txt )
 
 #------------------------------------------------------------------
 #Include makefile building internal tools (only on host / not needed on target)

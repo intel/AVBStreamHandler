@@ -15,13 +15,13 @@
 
 int main(int argc, char *argv[])
 {
-  const char *cmd = "setcap cap_net_admin,cap_net_raw,cap_net_bind_service,cap_sys_nice=pe ";
+  const char *cmd = "setcap cap_net_raw,cap_sys_nice=pe ";
   char *full_cmd = NULL;
   size_t size = 0, sprintf_size = 0;
   int result = 0;
   cap_t cap;
-  unsigned num_caps = 4;
-  cap_value_t capList[4] = { CAP_NET_ADMIN, CAP_NET_RAW, CAP_NET_BIND_SERVICE, CAP_SYS_NICE };
+  unsigned num_caps = 2;
+  cap_value_t capList[2] = { CAP_NET_RAW, CAP_SYS_NICE };
   cap_t mycap;
   cap_flag_value_t myvalue = CAP_CLEAR;
 
