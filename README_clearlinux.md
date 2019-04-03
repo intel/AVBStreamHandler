@@ -146,4 +146,7 @@ Then, run the `avb_video_debug_app`:
 
 Output should contain messages about sending (or receiving) packets with
 success.
-# 
+
+## Security issues
+
+Please report any security issues with this code to https://www.intel.com/security
