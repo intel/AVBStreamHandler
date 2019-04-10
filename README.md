@@ -278,5 +278,5 @@ And one can see another window displaying.
 
 ## Security issues
 
-Please report any security issues with this code to https://01.org/security
+Please report any security issues with this code to https://www.intel.com/security
 
