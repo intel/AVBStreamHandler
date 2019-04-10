@@ -158,6 +158,17 @@ protected:
 };
 
 
+/*
+ * Based on the sample code at https://www.boost.org/doc/libs/1_50_0/
+ * doc/html/boost_asio/example/serialization/connection.hpp from Boost
+ * under the follwing license.
+ *
+ * Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+ *
+ * Distributed under the Boost Software License, Version 1.0. (See accompanying
+ * file LICENSE_BOOST.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+ */
+
 /// The connection class provides serialization primitives on top of a socket.
 /**
  * Each message sent using this class consists of:
