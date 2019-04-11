@@ -19,7 +19,7 @@ $ swupd bundle-add linux-dev
 
 # AVB StreamHandler #
 $ mkdir build && cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib64  -DIAS_IS_HOST_BUILD=1 ../
+$ cmake -DIAS_PREPRODUCTION_SW="" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib64 -DIAS_IS_HOST_BUILD=1 -DIAS_DISABLE_DOC=1 ../
 $ make
 $ sudo make install
 
